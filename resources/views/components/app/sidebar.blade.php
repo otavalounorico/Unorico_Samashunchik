@@ -149,26 +149,6 @@
 
             <!-- Hasta aqui -->
 
-            <li class="nav-item border-start my-0 pt-2">
-                <a class="nav-link position-relative ms-0 ps-2 py-2 {{ is_current_route('folders.index') ? 'active' : '' }}"
-                    href="{{ route('folders.index') }}">
-                    <span class="nav-link-text ms-1">Gestión Carpetas</span>
-                </a>
-            </li>
-
-            <li class="nav-item border-start my-0 pt-2">
-                <a class="nav-link position-relative ms-0 ps-2 py-2 {{ is_current_route('file_names.index') ? 'active' : '' }}"
-                    href="{{ route('file_names.index') }}">
-                    <span class="nav-link-text ms-1">Gestión Nombres Archivos</span>
-                </a>
-            </li>
-
-            <li class="nav-item border-start my-0 pt-2">
-                <a class="nav-link position-relative ms-0 ps-2 py-2 {{ is_current_route('files.index') ? 'active' : '' }}"
-                    href="{{ route('files.index') }}">
-                    <span class="nav-link-text ms-1">Gestión Archivos</span>
-                </a>
-            </li>
             @endrole
             @hasanyrole('Administrador|Usuario')
             <li class="nav-item mt-2">
@@ -183,13 +163,6 @@
                 </div>
             </li>
 
-            <!-- Nuevo para ver como explorador de archivos  -->
-            <li class="nav-item border-start my-0 pt-2">
-                <a class="nav-link position-relative ms-0 ps-2 py-2 {{ request()->routeIs('folders.explorer') ? 'active' : '' }}"
-                    href="{{ route('folders.explorer') }}">
-                    <span class="nav-link-text ms-1">Explorador de Archivos</span>
-                </a>
-            </li>
             @endhasanyrole
 
             @hasanyrole('Administrador|Usuario|Auditor')

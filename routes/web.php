@@ -9,9 +9,6 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RolePermissionController;
-use App\Http\Controllers\FolderController;
-use App\Http\Controllers\FileNameController;
-use App\Http\Controllers\FileController;
 use App\Models\User;
 use App\Http\Controllers\AuditController; 
 use App\Http\Controllers\PermissionManagerController;
@@ -83,23 +80,6 @@ Route::middleware(['auth','role:Administrador'])->group(function () {
 });
 
 //Nuevo para todos los modulos
-// Carpeta: ver/crear/editar/eliminar
-Route::middleware(['auth','permission:ver carpeta'])->get('/folders', [FolderController::class, 'index'])->name('folders.index');
-Route::middleware(['auth','permission:crear carpeta'])->get('/folders/create', [FolderController::class, 'create'])->name('folders.create');
-Route::middleware(['auth','permission:crear carpeta'])->post('/folders', [FolderController::class, 'store'])->name('folders.store');
-Route::middleware(['auth','permission:editar carpeta'])->get('/folders/{folder}/edit', [FolderController::class, 'edit'])->name('folders.edit');
-Route::middleware(['auth','permission:editar carpeta'])->put('/folders/{folder}', [FolderController::class, 'update'])->name('folders.update');
-Route::middleware(['auth','permission:eliminar carpeta'])->delete('/folders/{folder}', [FolderController::class, 'destroy'])->name('folders.destroy');
-
-// Archivo: ver/subir/editar/eliminar
-Route::middleware(['auth','permission:ver archivo'])->get('/files', [FileController::class, 'index'])->name('files.index');
-Route::middleware(['auth','permission:subir archivo'])->get('/files/create', [FileController::class, 'create'])->name('files.create');
-Route::middleware(['auth','permission:subir archivo'])->post('/files', [FileController::class, 'store'])->name('files.store');
-Route::middleware(['auth','permission:ver archivo'])->get('/files/{file}', [FileController::class, 'show'])->name('files.show');
-Route::middleware(['auth','permission:editar archivo'])->get('/files/{file}/edit', [FileController::class, 'edit'])->name('files.edit');
-Route::middleware(['auth','permission:editar archivo'])->put('/files/{file}', [FileController::class, 'update'])->name('files.update');
-Route::middleware(['auth','permission:eliminar archivo'])->delete('/files/{file}', [FileController::class, 'destroy'])->name('files.destroy');
-
 // Auditoría: solo ver auditoria
 Route::middleware(['auth','permission:ver auditoria'])->get('/audits', [AuditController::class, 'index'])->name('auditoria.index');
 
@@ -112,52 +92,10 @@ Route::middleware(['auth', 'role.status:Administrador'])->group(function () {
     Route::put('/user/{user}/update', [UserController::class, 'update'])->name('users.update');
     Route::put('/user/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
-    // Gestión de Carpetas
-    Route::get('/folders', [FolderController::class, 'index'])->name('folders.index');
-    Route::get('/folders/create', [FolderController::class, 'create'])->name('folders.create');
-    Route::post('/folders', [FolderController::class, 'store'])->name('folders.store');
-    Route::get('/folders/{folder}/edit', [FolderController::class, 'edit'])->name('folders.edit');
-    Route::put('/folders/{folder}', [FolderController::class, 'update'])->name('folders.update');
-    Route::delete('/folders/{folder}', [FolderController::class, 'destroy'])->name('folders.destroy');
-
-    // Gestión de nombres de archivos
-    Route::get('/file_names', [FileNameController::class, 'index'])->name('file_names.index');
-    Route::get('/file_names/create', [FileNameController::class, 'create'])->name('file_names.create');
-    Route::post('/file_names', [FileNameController::class, 'store'])->name('file_names.store');
-    Route::get('/file_names/{fileName}/edit', [FileNameController::class, 'edit'])->name('file_names.edit');
-    Route::put('/file_names/{fileName}', [FileNameController::class, 'update'])->name('file_names.update');
-    Route::patch('/file-names/{id}/deactivate', [FileNameController::class, 'deactivate'])->name('file-names.deactivate');
-    Route::patch('/file-names/{id}/activate', [FileNameController::class, 'activate'])->name('file-names.activate');
-    
-    // Gestión de Archivos
-    Route::get('/files', [FileController::class, 'index'])->name('files.index');
 
 });
 
-Route::middleware(['auth', 'role.status:Administrador,Usuario'])->group(function () {
 
-    // Explorador de carpetas
-    // ✅ PRIMERO la ruta específica de sugerencias
-    Route::get('/explorer/suggestions', [FolderController::class, 'searchSuggestions'])->name('folders.suggestions');
-    // ✅ LUEGO la ruta general del explorador
-    Route::get('/explorer/{id?}', [FolderController::class, 'explorer'])->name('folders.explorer');
-
-    Route::get('/folders/{folder}', [FolderController::class, 'show'])->name('folders.show');
-    Route::get('/folders/subfolders', [FolderController::class, 'getSubfolders']);
-    Route::get('/folders/{folder}/children', function ($folderId) {$parentId = $folderId == 0 ? null : $folderId;
-    return \App\Models\Folder::where('parent_id', $parentId)->select('id', 'name')->get();});
-    Route::get('/files/{id}/preview', [FileController::class, 'preview'])->name('files.preview');
-
-    // Route::get('/explorer', [FolderController::class, 'explorer'])->name('folders.explorer');
-
-    Route::get('/files/create', [FileController::class, 'create'])->name('files.create');
-    Route::post('/files', [FileController::class, 'store'])->name('files.store');
-    Route::get('/files/{file}', [FileController::class, 'show'])->name('files.show');
-    Route::get('/files/{file}/edit', [FileController::class, 'edit'])->name('files.edit');
-    Route::put('/files/{file}', [FileController::class, 'update'])->name('files.update');
-    Route::delete('/files/{file}', [FileController::class, 'destroy'])->name('files.destroy');
-    Route::get('/files/download/{file}', [FileController::class, 'download'])->name('files.download');
-});
 
 Route::middleware(['auth', 'role.status:Auditor'])->group(function () {
     Route::get('/audits', [AuditController::class, 'index'])->name('auditoria.index');
