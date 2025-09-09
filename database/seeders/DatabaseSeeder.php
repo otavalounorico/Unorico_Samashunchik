@@ -42,5 +42,8 @@ class DatabaseSeeder extends Seeder
             'status' => false,
         ]);
         $auditor->assignRole('Auditor');
+
+        // Luego se crean los catálogos
+        $this->call(CatalogosSeeder::class);
     }
 }
