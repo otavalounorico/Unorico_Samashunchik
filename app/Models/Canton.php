@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Canton extends Model
 {
-    use HasFactory;
+    protected $guarded = [];
+    public function parroquias() { return $this->hasMany(Parroquia::class); }
 }

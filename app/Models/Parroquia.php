@@ -7,5 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Parroquia extends Model
 {
-    use HasFactory;
+    protected $guarded = [];
+    public function canton() { return $this->belongsTo(Canton::class); }
+    public function comunidades() { return $this->hasMany(Comunidad::class); }
 }

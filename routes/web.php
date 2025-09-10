@@ -10,8 +10,11 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RolePermissionController;
 use App\Models\User;
-use App\Http\Controllers\AuditController; 
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\PermissionManagerController;
+use App\Http\Controllers\CantonController;
+use App\Http\Controllers\ParroquiaController;
+use App\Http\Controllers\ComunidadController;
 
 
 /*
@@ -25,15 +28,23 @@ use App\Http\Controllers\PermissionManagerController;
 |
 */
 
-Route::get('/', function () {return redirect('/dashboard');})->middleware('auth');
-Route::get('/dashboard', function () {return view('dashboard');})->name('dashboard')->middleware('auth');
-Route::get('/tables', function () {return view('tables');})->name('tables')->middleware('auth');
-Route::get('/wallet', function () {return view('wallet');})->name('wallet')->middleware('auth');
-Route::get('/RTL', function () {return view('RTL');})->name('RTL')->middleware('auth');
-Route::get('/profile', function () {return view('account-pages.profile');})->name('profile')->middleware('auth');
+Route::get('/', function () {
+    return redirect('/dashboard'); })->middleware('auth');
+Route::get('/dashboard', function () {
+    return view('dashboard'); })->name('dashboard')->middleware('auth');
+Route::get('/tables', function () {
+    return view('tables'); })->name('tables')->middleware('auth');
+Route::get('/wallet', function () {
+    return view('wallet'); })->name('wallet')->middleware('auth');
+Route::get('/RTL', function () {
+    return view('RTL'); })->name('RTL')->middleware('auth');
+Route::get('/profile', function () {
+    return view('account-pages.profile'); })->name('profile')->middleware('auth');
 
-Route::get('/signin', function () {return view('account-pages.signin');})->name('signin');
-Route::get('/signup', function () {return view('account-pages.signup');})->name('signup')->middleware('guest');
+Route::get('/signin', function () {
+    return view('account-pages.signin'); })->name('signin');
+Route::get('/signup', function () {
+    return view('account-pages.signup'); })->name('signup')->middleware('guest');
 Route::get('/sign-up', [RegisterController::class, 'create'])->middleware('guest')->name('sign-up');
 Route::post('/sign-up', [RegisterController::class, 'store'])->middleware('guest');
 Route::get('/sign-in', [LoginController::class, 'create'])->middleware('guest')->name('sign-in');
@@ -53,7 +64,7 @@ Route::put('/laravel-examples/user-profile/update', [ProfileController::class, '
 
 // Gestión de roles y permisos con Spatie/Permission
 
-Route::middleware(['auth','role:Administrador'])->group(function () {
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
 
     // 1) Rutas estáticas del gestor global (primero)
     Route::get('/roles/permissions-manager', [PermissionManagerController::class, 'index'])
@@ -81,8 +92,53 @@ Route::middleware(['auth','role:Administrador'])->group(function () {
 
 //Nuevo para todos los modulos
 // Auditoría: solo ver auditoria
-Route::middleware(['auth','permission:ver auditoria'])->get('/audits', [AuditController::class, 'index'])->name('auditoria.index');
+Route::middleware(['auth', 'permission:ver auditoria'])->get('/audits', [AuditController::class, 'index'])->name('auditoria.index');
 
+// Aqui va lo de cantones, parroquias y comunidades
+Route::middleware(['web', 'auth'])->group(function () {
+
+    // =========================
+    // Cantones
+    // =========================
+    Route::get('cantones', [CantonController::class, 'index'])->name('cantones.index');
+    Route::get('cantones/create', [CantonController::class, 'create'])->name('cantones.create');
+    Route::post('cantones', [CantonController::class, 'store'])->name('cantones.store');
+    Route::get('cantones/{canton}', [CantonController::class, 'show'])->name('cantones.show');
+    Route::get('cantones/{canton}/edit', [CantonController::class, 'edit'])->name('cantones.edit');
+    Route::put('cantones/{canton}', [CantonController::class, 'update'])->name('cantones.update');
+    Route::delete('cantones/{canton}', [CantonController::class, 'destroy'])->name('cantones.destroy');
+
+    // =========================
+    // Parroquias
+    // =========================
+    Route::get('parroquias', [ParroquiaController::class, 'index'])->name('parroquias.index');
+    Route::get('parroquias/create', [ParroquiaController::class, 'create'])->name('parroquias.create');
+    Route::post('parroquias', [ParroquiaController::class, 'store'])->name('parroquias.store');
+    Route::get('parroquias/{parroquia}', [ParroquiaController::class, 'show'])->name('parroquias.show');
+    Route::get('parroquias/{parroquia}/edit', [ParroquiaController::class, 'edit'])->name('parroquias.edit');
+    Route::put('parroquias/{parroquia}', [ParroquiaController::class, 'update'])->name('parroquias.update');
+    Route::delete('parroquias/{parroquia}', [ParroquiaController::class, 'destroy'])->name('parroquias.destroy');
+
+    // =========================
+    // Comunidades
+    // =========================
+    Route::get('comunidades', [ComunidadController::class, 'index'])->name('comunidades.index');
+    Route::get('comunidades/create', [ComunidadController::class, 'create'])->name('comunidades.create');
+    Route::post('comunidades', [ComunidadController::class, 'store'])->name('comunidades.store');
+    Route::get('comunidades/{comunidad}', [ComunidadController::class, 'show'])->name('comunidades.show');
+    Route::get('comunidades/{comunidad}/edit', [ComunidadController::class, 'edit'])->name('comunidades.edit');
+    Route::put('comunidades/{comunidad}', [ComunidadController::class, 'update'])->name('comunidades.update');
+    Route::delete('comunidades/{comunidad}', [ComunidadController::class, 'destroy'])->name('comunidades.destroy');
+
+    // =========================
+    // Rutas AJAX dependientes
+    // =========================
+    Route::get('cantones/{canton}/parroquias', [ParroquiaController::class, 'byCanton'])
+        ->name('cantones.parroquias');
+
+    Route::get('parroquias/{parroquia}/comunidades', [ComunidadController::class, 'byParroquia'])
+        ->name('parroquias.comunidades');
+});
 // hasta aqui lo nuevo
 
 Route::middleware(['auth', 'role.status:Administrador'])->group(function () {
@@ -94,8 +150,6 @@ Route::middleware(['auth', 'role.status:Administrador'])->group(function () {
 
 
 });
-
-
 
 Route::middleware(['auth', 'role.status:Auditor'])->group(function () {
     Route::get('/audits', [AuditController::class, 'index'])->name('auditoria.index');

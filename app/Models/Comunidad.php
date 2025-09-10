@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comunidad extends Model
 {
-    use HasFactory;
+    protected $guarded = [];
+    public function parroquia() { return $this->belongsTo(Parroquia::class); }
 }
