@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comunidad extends Model
 {
+    protected $table = 'comunidades';
     protected $guarded = [];
-    public function parroquia() { return $this->belongsTo(Parroquia::class); }
+    public function parroquia()
+    {
+        return $this->belongsTo(Parroquia::class);
+    }
 }

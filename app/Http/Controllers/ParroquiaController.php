@@ -8,11 +8,24 @@ use App\Models\Canton;
 
 class ParroquiaController extends Controller
 {
-    public function index()
-    {
-        $parroquias = Parroquia::with('canton')->orderBy('nombre')->get();
-        return view('parroquias.parroquia-index', compact('parroquias'));
+public function index(Request $request)
+{
+    $q = trim($request->get('q', ''));
+
+    $parroquiasQuery = Parroquia::with('canton')->orderBy('nombre');
+
+    if ($q !== '') {
+        $parroquiasQuery->where('nombre', 'ILIKE', "%{$q}%"); // o 'LIKE' en MySQL
     }
+
+    // 👇 paginator para la tabla
+    $parroquias = $parroquiasQuery->paginate(10)->withQueryString();
+
+    // 👇 combo/filtro de cantones (lista completa, sin paginar)
+    $cantones = Canton::orderBy('nombre')->get(['id','nombre']);
+
+    return view('parroquias.parroquia-index', compact('parroquias','cantones'));
+}
 
     public function create()
     {

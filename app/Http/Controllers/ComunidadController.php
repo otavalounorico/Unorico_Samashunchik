@@ -8,12 +8,21 @@ use App\Models\Parroquia;
 
 class ComunidadController extends Controller
 {
-    public function index()
-    {
-        $comunidades = Comunidad::with('parroquia.canton')->orderBy('nombre')->get();
-        return view('comunidades.comunidad-index', compact('comunidades'));
+public function index(Request $request)
+{
+    $q = trim($request->get('q', ''));
+
+    $query = Comunidad::with('parroquia.canton')->orderBy('nombre');
+
+    if ($q !== '') {
+        $query->where('nombre', 'ILIKE', "%{$q}%"); // o 'LIKE' en MySQL
     }
 
+    // 👇 paginator
+    $comunidades = $query->paginate(10)->withQueryString();
+
+    return view('comunidades.comunidad-index', compact('comunidades'));
+}
     public function create()
     {
         $parroquias = Parroquia::orderBy('nombre')->get(['id','nombre']);

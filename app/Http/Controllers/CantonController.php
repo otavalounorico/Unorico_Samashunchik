@@ -8,11 +8,22 @@ use App\Models\Canton;
 
 class CantonController extends Controller
 {
-    public function index()
-    {
-        $cantones = Canton::orderBy('nombre')->get();
-        return view('cantones.canton-index', compact('cantones'));
+public function index(Request $request)
+{
+    $q = trim($request->get('q', ''));
+
+    $query = Canton::orderBy('nombre');
+
+    // Postgres: ILIKE | MySQL: LIKE
+    if ($q !== '') {
+        $query->where('nombre', 'ILIKE', "%{$q}%"); // cambia a 'LIKE' si usas MySQL
     }
+
+    // 👇 retorna paginator (ya puedes usar ->links())
+    $cantones = $query->paginate(10)->withQueryString();
+
+    return view('cantones.canton-index', compact('cantones'));
+}
 
     public function create()
     {
