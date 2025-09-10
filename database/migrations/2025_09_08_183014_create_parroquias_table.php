@@ -16,6 +16,7 @@ return new class extends Migration {
             $t->string('nombre', 255);
             $t->timestampsTz();
             $t->unique(['canton_id', 'nombre']); // no duplicar por cantón
+            $t->index('canton_id');
         });
     }
     public function down(): void

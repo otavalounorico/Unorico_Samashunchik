@@ -16,6 +16,7 @@ return new class extends Migration {
             $t->string('nombre', 255);
             $t->timestampsTz();
             $t->unique(['parroquia_id', 'nombre']);
+            $t->index('parroquia_id'); 
         });
     }
     public function down(): void
