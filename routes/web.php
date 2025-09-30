@@ -19,6 +19,7 @@ use App\Http\Controllers\SocioController;
 use App\Http\Controllers\FallecidoController;
 use App\Http\Controllers\BloqueController;
 use App\Http\Controllers\NichoController;
+use App\Http\Controllers\SocioNichoController;
 
 
 /*
@@ -182,7 +183,18 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/nichos/{nicho}/edit', [NichoController::class, 'edit'])->name('nichos.edit');
     Route::put('/nichos/{nicho}', [NichoController::class, 'update'])->name('nichos.update');
     Route::delete('/nichos/{nicho}', [NichoController::class, 'destroy'])->name('nichos.destroy');
+
+//SOCIO-NICHO
+    Route::get('/socio-nicho', [SocioNichoController::class, 'index'])->name('socio_nicho.index');
+    Route::get('/socio-nicho/create', [SocioNichoController::class, 'create'])->name('socio_nicho.create');
+    Route::post('/socio-nicho', [SocioNichoController::class, 'store'])->name('socio_nicho.store');
+    Route::get('/socio-nicho/{socioNicho}', [SocioNichoController::class, 'show'])->name('socio_nicho.show');
+    Route::get('/socio-nicho/{socioNicho}/edit', [SocioNichoController::class, 'edit'])->name('socio_nicho.edit');
+    Route::put('/socio-nicho/{socioNicho}', [SocioNichoController::class, 'update'])->name('socio_nicho.update');
+    Route::delete('/socio-nicho/{socioNicho}', [SocioNichoController::class, 'destroy'])->name('socio_nicho.destroy');
+
 });
+
 
 // hasta aqui lo nuevo
 
