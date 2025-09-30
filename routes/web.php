@@ -20,6 +20,7 @@ use App\Http\Controllers\FallecidoController;
 use App\Http\Controllers\BloqueController;
 use App\Http\Controllers\NichoController;
 use App\Http\Controllers\SocioNichoController;
+use App\Http\Controllers\BeneficioController;
 
 
 /*
@@ -192,6 +193,15 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/socio-nicho/{socioNicho}/edit', [SocioNichoController::class, 'edit'])->name('socio_nicho.edit');
     Route::put('/socio-nicho/{socioNicho}', [SocioNichoController::class, 'update'])->name('socio_nicho.update');
     Route::delete('/socio-nicho/{socioNicho}', [SocioNichoController::class, 'destroy'])->name('socio_nicho.destroy');
+//BENEFICIOS
+
+    Route::get('/beneficios', [BeneficioController::class, 'index'])->name('beneficios.index');
+    Route::get('/beneficios/create', [BeneficioController::class, 'create'])->name('beneficios.create');
+    Route::post('/beneficios', [BeneficioController::class, 'store'])->name('beneficios.store');
+    Route::get('/beneficios/{beneficio}', [BeneficioController::class, 'show'])->name('beneficios.show');
+    Route::get('/beneficios/{beneficio}/edit', [BeneficioController::class, 'edit'])->name('beneficios.edit');
+    Route::put('/beneficios/{beneficio}', [BeneficioController::class, 'update'])->name('beneficios.update');
+    Route::delete('/beneficios/{beneficio}', [BeneficioController::class, 'destroy'])->name('beneficios.destroy');
 
 });
 
