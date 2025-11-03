@@ -40,7 +40,7 @@
                     <td>{{ $b->id }}</td>
                     <td>{{ $b->codigo }}</td>
                     <td>{{ $b->nombre }}</td>
-                    <td>{{ $b->area ?? '—' }}</td>
+                    <td>{{ $b->area_m2 ?? '—' }}</td>
                     <td>
                       <a href="{{ route('bloques.show',$b) }}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a>
                       <a href="{{ route('bloques.edit',$b) }}" class="btn btn-sm btn-warning"><i class="fa fa-pen"></i></a>
