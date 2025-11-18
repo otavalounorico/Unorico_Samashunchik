@@ -23,6 +23,7 @@ use App\Http\Controllers\SocioNichoController;
 use App\Http\Controllers\BeneficioController;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\BloqueGeomController;
+use App\Http\Controllers\FacturaController;
 
 
 /*
@@ -226,6 +227,21 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('/servicios/{servicio}', [ServicioController::class, 'update'])->name('servicios.update');
     Route::delete('/servicios/{servicio}', [ServicioController::class, 'destroy'])->name('servicios.destroy');
 
+    //FACTURAS
+    // Listado de facturas
+Route::get('/facturas', [FacturaController::class, 'index'])->name('facturas.index');
+// Formulario para crear nueva factura
+Route::get('/facturas/create', [FacturaController::class, 'create'])->name('facturas.create');
+// Guardar nueva factura
+Route::post('/facturas', [FacturaController::class, 'store'])->name('facturas.store');
+// Ver una factura específica
+Route::get('/facturas/{factura}', [FacturaController::class, 'show'])->name('facturas.show');
+// Formulario para editar factura
+Route::get('/facturas/{factura}/edit', [FacturaController::class, 'edit'])->name('facturas.edit');
+// Actualizar factura existente
+Route::put('/facturas/{factura}', [FacturaController::class, 'update'])->name('facturas.update');
+// Eliminar factura
+Route::delete('/facturas/{factura}', [FacturaController::class, 'destroy'])->name('facturas.destroy');
 });
 
 

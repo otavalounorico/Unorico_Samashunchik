@@ -212,6 +212,14 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a href="{{ route('facturas.index') }}" class="nav-link">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Facturas</span>
+                </a>
+            </li>
+
+
 
             @endhasanyrole
 
