@@ -3,7 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
+// ❌ BORRA O COMENTA ESTA LÍNEA: use Spatie\Permission\Models\Role;
+use App\Models\Role; // ✅ AGREGA ESTA LÍNEA (Para que use tu lógica del R001)
 use Spatie\Permission\Models\Permission;
 
 class RolesAndPermissionsSeeder extends Seeder
@@ -13,6 +14,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Roles base
         $roles = ['Administrador', 'Auditor', 'Usuario'];
         foreach ($roles as $name) {
+            // Al usar App\Models\Role, aquí se dispara el evento "created" 
+            // y se genera el código R001, R002, etc. automáticamente.
             Role::firstOrCreate(['name' => $name], ['guard_name' => 'web']);
         }
 
