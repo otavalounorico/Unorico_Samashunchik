@@ -13,10 +13,11 @@ return new class extends Migration {
         Schema::create('comunidades', function (Blueprint $t) {
             $t->id();
             $t->foreignId('parroquia_id')->constrained('parroquias')->cascadeOnUpdate()->restrictOnDelete();
+            $t->string('codigo_unico', 20)->unique(); 
             $t->string('nombre', 255);
             $t->timestampsTz();
             $t->unique(['parroquia_id', 'nombre']);
-            $t->index('parroquia_id'); 
+            $t->index('parroquia_id');
         });
     }
     public function down(): void

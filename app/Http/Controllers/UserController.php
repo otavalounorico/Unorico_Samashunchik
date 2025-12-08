@@ -105,10 +105,10 @@ class UserController extends Controller
 
         if ($request->report_type == 'pdf') {
             $pdf = Pdf::loadView('user.users-report', compact('users'));
-            return $pdf->download('reporte_usuarios.pdf');
+            return $pdf->download('usuarios_reporte_'.date('YmdHis').'.pdf');
         } elseif ($request->report_type == 'excel') {
             $headings = ['Código de Usuario', 'Nombre', 'Email', 'Teléfono', 'Ubicación', 'Rol', 'Estado'];
-            return Excel::download(new GenericExport($users, $headings), 'usuarios.xlsx');
+            return Excel::download(new GenericExport($users, $headings), 'usuarios_reporte_'.date('YmdHis').'.xlsx');
         }
 
         return redirect()->back()->with('error', 'Tipo de reporte no válido.');

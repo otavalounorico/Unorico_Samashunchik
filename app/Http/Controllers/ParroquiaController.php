@@ -110,7 +110,7 @@ class ParroquiaController extends Controller
         // 3. Generar PDF (Se mantiene intacto, incluye la fecha)
         if ($request->report_type == 'pdf') {
             $pdf = Pdf::loadView('parroquias.reports-pdf', compact('parroquias'));
-            return $pdf->download('reporte_parroquias.pdf');
+            return $pdf->download('parroquias_reporte_'.date('YmdHis').'.pdf');
         } 
         
         // 4. Generar Excel (CORRECCIÓN APLICADA AQUÍ)
@@ -130,7 +130,7 @@ class ParroquiaController extends Controller
             $headings = ['Código', 'Parroquia', 'Cantón'];
             
             // Usamos GenericExport, que ahora recibe datos planos y funciona sin problemas.
-            return Excel::download(new GenericExport($dataExport, $headings), 'parroquias.xlsx');
+            return Excel::download(new GenericExport($dataExport, $headings), 'parroquias_reporte_'.date('YmdHis').'.xlsx');
         }
 
         return redirect()->back()->with('error', 'Tipo de reporte no válido.');

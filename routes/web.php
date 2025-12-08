@@ -147,6 +147,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('comunidades/{comunidad}/edit', [ComunidadController::class, 'edit'])->name('comunidades.edit');
     Route::put('comunidades/{comunidad}', [ComunidadController::class, 'update'])->name('comunidades.update');
     Route::delete('comunidades/{comunidad}', [ComunidadController::class, 'destroy'])->name('comunidades.destroy');
+    Route::post('comunidades/reports', [App\Http\Controllers\ComunidadController::class, 'reports'])->name('comunidades.reports');
 
     // =========================
     // Rutas AJAX dependientes
