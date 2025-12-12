@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
 class Bloque extends Model
 {
     use HasFactory, SoftDeletes;
@@ -15,11 +14,11 @@ class Bloque extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'geom' => 'array',      // puedes recibir GeoJSON como arreglo
+        'geom' => 'array',
         'area_m2' => 'decimal:2',
     ];
 
-    // Generar código automático tipo B0001
+    // --- CAMBIO: Generar código automático ---
     protected static function boot()
     {
         parent::boot();
@@ -32,6 +31,7 @@ class Bloque extends Model
             }
         });
     }
+    // -----------------------------------------
 
     /** Relaciones **/
     public function creador()

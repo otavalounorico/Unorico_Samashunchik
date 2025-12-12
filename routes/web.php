@@ -189,7 +189,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('/bloques/{bloque}', [BloqueController::class, 'update'])->name('bloques.update');
     Route::patch('/bloques/{bloque}', [BloqueController::class, 'update']); // opcional
     Route::delete('/bloques/{bloque}', [BloqueController::class, 'destroy'])->name('bloques.destroy');
-
+    Route::post('bloques/reports', [BloqueController::class, 'reports'])->name('bloques.reports');
 
     //BLOQUE GEOM
     Route::get('/bloques_geom/{id}/geojson', [BloqueGeomController::class, 'geojson'])->name('bloques_geom.geojson')->whereNumber('id');

@@ -11,17 +11,16 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        // Asegurar que PostGIS esté activo
         DB::statement('CREATE EXTENSION IF NOT EXISTS postgis');
-
-        // Crear la tabla bloques (incluye la FK hacia bloques_geom porque ya existe)
         Schema::create('bloques', function (Blueprint $t) {
             $t->id();
+            
+            // --- CAMBIO: Campo agregado ---
             $t->string('codigo', 10)->unique();
             $t->string('nombre', 255);
             $t->text('descripcion')->nullable();
 
-            // FK hacia bloques_geom (asegúrate de que bloques_geom ya exista)
+            // FK hacia bloques_geom
             $t->foreignId('bloque_geom_id')
                 ->nullable()
                 ->constrained('bloques_geom')
@@ -32,7 +31,6 @@ return new class extends Migration {
             $t->timestampsTz();
             $t->softDeletesTz();
         });
-
     }
 
     /**
@@ -40,23 +38,16 @@ return new class extends Migration {
      */
     public function down(): void
     {
-
+        // Tu código original del down
         if (Schema::hasTable('bloques')) {
-
             Schema::table('bloques', function (Blueprint $table) {
-
                 try {
-
                     $table->dropForeign(['bloque_geom_id']);
-
                 } catch (\Throwable $e) {
                 }
-
             });
-
         }
 
         Schema::dropIfExists('bloques');
-
     }
 };
