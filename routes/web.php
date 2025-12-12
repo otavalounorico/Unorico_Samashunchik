@@ -178,6 +178,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('/fallecidos/{fallecido}', [FallecidoController::class, 'update'])->name('fallecidos.update');
     Route::patch('/fallecidos/{fallecido}', [FallecidoController::class, 'update']); // opcional
     Route::delete('/fallecidos/{fallecido}', [FallecidoController::class, 'destroy'])->name('fallecidos.destroy');
+    Route::post('fallecidos/reports', [FallecidoController::class, 'reports'])->name('fallecidos.reports');
 
     //BLOQUES
     Route::get('/bloques', [BloqueController::class, 'index'])->name('bloques.index');
