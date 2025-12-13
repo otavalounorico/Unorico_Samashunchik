@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use App\Models\Nicho;
 use App\Models\Bloque;
-use App\Models\Fallecido; // <-- importar
-use App\Models\Socio;     // <-- importar
+
+// Librerías Reportes
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\NichosExport;
+use Illuminate\Support\Facades\Http; 
 
 class NichoController extends Controller
 {
@@ -16,10 +20,10 @@ class NichoController extends Controller
         $q = trim($request->get('q',''));
         $bloqueId = $request->get('bloque_id');
 
-        $query = Nicho::with('bloque')->orderBy('codigo');
+        // Ordenar por código (N0001, N0002...)
+        $query = Nicho::with('bloque')->orderBy('codigo', 'asc');
 
         if ($q !== '') {
-            // Estás en PostgreSQL → ILIKE ok
             $query->where('codigo','ILIKE',"%{$q}%");
         }
         if ($bloqueId) {
@@ -34,70 +38,31 @@ class NichoController extends Controller
 
     public function create()
     {
+        // Solo necesitamos los bloques para el select
         $bloques = Bloque::orderBy('nombre')->get();
-
-        // ¡OJO!: usar 'cedula' (no 'documento')
-        $fallecidos = Fallecido::select('id','apellidos','nombres','cedula')
-                        ->orderBy('apellidos')->limit(200)->get();
-
-        $socios = Socio::select('id','apellidos','nombres','cedula')
-                        ->orderBy('apellidos')->limit(200)->get();
-
-        return view('nichos.nicho-create', compact('bloques','fallecidos','socios'));
+        return view('nichos.nicho-create', compact('bloques'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'bloque_id' => 'required|exists:bloques,id',
-            'codigo'    => 'required|string|max:50|unique:nichos,codigo,NULL,id,bloque_id,'.$request->bloque_id,
+            // 'codigo' se genera automático en el Model
             'capacidad' => 'required|integer|min:1',
             'estado'    => 'required|in:disponible,ocupado,mantenimiento',
-
-            // Opcionales (asignaciones pivot al crear)
-            'fallecido.id'               => 'nullable|exists:fallecidos,id',
-            'fallecido.posicion'         => 'nullable|integer|min:1',
-            'fallecido.fecha_inhumacion' => 'nullable|date',
-            'fallecido.fecha_exhumacion' => 'nullable|date|after_or_equal:fallecido.fecha_inhumacion',
-            'fallecido.observacion'      => 'nullable|string|max:2000',
-
-            'responsable.socio_id' => 'nullable|exists:socios,id',
-            'responsable.rol'      => 'nullable|in:TITULAR,CO-TITULAR,RESPONSABLE',
-            'responsable.desde'    => 'nullable|date',
-            'responsable.hasta'    => 'nullable|date|after_or_equal:responsable.desde',
+            'qr_uuid'   => 'nullable|string|unique:nichos,qr_uuid',
         ]);
 
         try {
-            DB::transaction(function () use ($request) {
-                $nicho = Nicho::create([
-                    'bloque_id'  => $request->bloque_id,
-                    'codigo'     => $request->codigo,
-                    'capacidad'  => $request->capacidad,
-                    'estado'     => $request->estado,
-                    'disponible' => $request->estado === 'disponible',
-                    // si quitaste geom del form, esto quedará en null
-                    'geom'       => $request->geom ? json_decode($request->geom, true) : null,
-                    'qr_uuid'    => $request->qr_uuid,
-                    'created_by' => auth()->id(),
-                ]);
-
-                if ($request->filled('fallecido.id')) {
-                    $nicho->fallecidos()->attach($request->input('fallecido.id'), [
-                        'posicion'         => (int)$request->input('fallecido.posicion', 1),
-                        'fecha_inhumacion' => $request->input('fallecido.fecha_inhumacion'),
-                        'fecha_exhumacion' => $request->input('fallecido.fecha_exhumacion'),
-                        'observacion'      => $request->input('fallecido.observacion'),
-                    ]);
-                }
-
-                if ($request->filled('responsable.socio_id')) {
-                    $nicho->socios()->attach($request->input('responsable.socio_id'), [
-                        'rol'   => $request->input('responsable.rol', 'TITULAR'),
-                        'desde' => $request->input('responsable.desde'),
-                        'hasta' => $request->input('responsable.hasta'),
-                    ]);
-                }
-            });
+            Nicho::create([
+                'bloque_id'  => $request->bloque_id,
+                // El modelo genera el código (N0001...)
+                'capacidad'  => $request->capacidad,
+                'estado'     => $request->estado,
+                'disponible' => $request->estado === 'disponible',
+                'qr_uuid'    => $request->qr_uuid,
+                'created_by' => auth()->id(),
+            ]);
 
             return redirect()->route('nichos.index')->with('success','Nicho creado correctamente.');
         } catch (\Throwable $e) {
@@ -121,9 +86,11 @@ class NichoController extends Controller
     {
         $request->validate([
             'bloque_id' => 'required|exists:bloques,id',
-            'codigo'    => 'required|string|max:50|unique:nichos,codigo,'.$nicho->id.',id,bloque_id,'.$request->bloque_id,
+            // Validamos unicidad ignorando el ID actual
+            'codigo'    => ['required', 'string', 'max:50', Rule::unique('nichos')->ignore($nicho->id)],
             'capacidad' => 'required|integer|min:1',
             'estado'    => 'required|in:disponible,ocupado,mantenimiento',
+            'qr_uuid'   => ['nullable', 'string', Rule::unique('nichos')->ignore($nicho->id)],
         ]);
 
         try {
@@ -133,7 +100,6 @@ class NichoController extends Controller
                 'capacidad'  => $request->capacidad,
                 'estado'     => $request->estado,
                 'disponible' => $request->estado === 'disponible',
-                'geom'       => $request->geom ? json_decode($request->geom, true) : $nicho->geom,
                 'qr_uuid'    => $request->qr_uuid,
             ]);
 
@@ -151,5 +117,156 @@ class NichoController extends Controller
         } catch (\Throwable $e) {
             return redirect()->route('nichos.index')->with('error','Error: '.$e->getMessage());
         }
+    }
+
+    // ── REPORTES PDF Y EXCEL ───────────────────────────────────────
+    public function reports(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        $reportType = $request->input('report_type');
+
+        if (empty($ids)) {
+            return redirect()->back()->with('error', 'Debe seleccionar al menos un registro.');
+        }
+
+        // Consulta optimizada sin relaciones extrañas
+        $nichos = Nicho::with('bloque')
+            ->whereIn('id', $ids)
+            ->orderBy('codigo', 'asc')
+            ->get();
+
+        // Encabezados
+        $headings = [
+            'ID',
+            'Código',
+            'Bloque',
+            'Estado',
+            'Disponibilidad',
+            'Capacidad'
+        ];
+
+        // Mapeo de datos
+        $data = $nichos->map(function ($n) {
+            return [
+                'id'             => $n->id,
+                'codigo'         => $n->codigo,
+                'bloque'         => $n->bloque->nombre ?? 'N/A',
+                'estado'         => ucfirst($n->estado),
+                'disponibilidad' => $n->disponible ? 'Sí' : 'No',
+                'capacidad'      => $n->capacidad,
+            ];
+        });
+
+        if ($reportType === 'excel') {
+            return Excel::download(new NichosExport($data, $headings), 'nichos_reporte.xlsx');
+            
+        } elseif ($reportType === 'pdf') {
+            $pdf = Pdf::loadView('nichos.reports-pdf', compact('data', 'headings'));
+            $pdf->setPaper('A4', 'portrait'); 
+            return $pdf->download('nichos_reporte_' . date('YmdHis') . '.pdf');
+        }
+
+        return redirect()->back();
+    }
+// Agrega esto en tu controlador
+
+// ─── 1. VISTA DE PREVISUALIZACIÓN (Ticket) ───
+    public function downloadQr(Request $request, Nicho $nicho)
+    {
+        $mode = $request->get('mode', 'text'); 
+
+        // Cargamos relaciones
+        $nicho->load(['bloque', 'fallecidos', 'socios']);
+
+        $textoQR = "";
+        $titulo  = "";
+
+        if ($mode === 'url') {
+            // ---------------------------------------------------------
+            // OPCIÓN FUTURA (ONLINE) - MANTENER COMENTADO
+            // ---------------------------------------------------------
+            // Esta línea se descomentará cuando tengas la ruta pública lista:
+            // $textoQR = route('public.nicho.info', ['uuid' => $nicho->qr_uuid]);
+
+            // POR AHORA: Usamos un link genérico para que no de error
+            $textoQR = url('/ver-nicho/' . $nicho->qr_uuid); 
+            
+            $titulo  = "QR WEB (FUTURO - EN CONSTRUCCIÓN)";
+
+        } else {
+            // ---------------------------------------------------------
+            // OPCIÓN PRESENTE (OFFLINE / TEXTO)
+            // ---------------------------------------------------------
+            $textoQR  = "NICHO: " . $nicho->codigo . "\n";
+            $textoQR .= "BLOQUE: " . ($nicho->bloque->nombre ?? 'S/N') . "\n";
+            
+            if ($nicho->fallecidos->isNotEmpty()) {
+                $textoQR .= "\n--- OCUPANTES ---\n";
+                foreach($nicho->fallecidos as $f) {
+                    $textoQR .= "- " . $f->apellidos . " " . $f->nombres . "\n";
+                }
+            } else {
+                $textoQR .= "\nESTADO: " . ucfirst($nicho->estado);
+            }
+
+            if ($nicho->socios->isNotEmpty()) {
+                $responsable = $nicho->socios->first();
+                $textoQR .= "\n--- RESPONSABLE ---\n";
+                $textoQR .= $responsable->apellidos . " " . $responsable->nombres;
+            }
+
+            $titulo = "QR DE DATOS (OFFLINE)";
+        }
+
+        // Generamos la URL de la imagen para la vista
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($textoQR);
+
+        // Retornamos la vista de previsualización
+        return view('nichos.nicho-qr-print', compact('nicho', 'qrUrl', 'textoQR', 'titulo', 'mode'));
+    }
+
+    // ─── 2. DESCARGA DIRECTA DE IMAGEN PNG (Acción del botón verde) ───
+    public function downloadQrImage(Nicho $nicho)
+    {
+        // 1. Reconstruimos el texto (Usamos la lógica OFFLINE por defecto para la descarga directa)
+        $nicho->load(['bloque', 'fallecidos', 'socios']);
+        
+        $texto  = "NICHO: " . $nicho->codigo . "\n";
+        $texto .= "BLOQUE: " . ($nicho->bloque->nombre ?? 'S/N') . "\n";
+        
+        if ($nicho->fallecidos->isNotEmpty()) {
+            $texto .= "\n--- OCUPANTES ---\n";
+            foreach($nicho->fallecidos as $f) {
+                $texto .= $f->apellidos . " " . $f->nombres . "\n";
+            }
+        } else {
+            $texto .= "\nESTADO: " . ucfirst($nicho->estado);
+        }
+
+        if ($nicho->socios->isNotEmpty()) {
+            $r = $nicho->socios->first();
+            $texto .= "\n--- RESPONSABLE ---\n";
+            $texto .= $r->apellidos . " " . $r->nombres;
+        }
+
+        // 2. Pedimos la imagen a la API (Tamaño 500x500 para mejor calidad)
+        $apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=" . urlencode($texto);
+        
+        // 3. Obtenemos el contenido del archivo
+        $imageContent = Http::get($apiUrl)->body();
+
+        // 4. Forzamos la descarga del archivo .png
+        $filename = 'QR_' . $nicho->codigo . '.png';
+
+        return response($imageContent)
+            ->header('Content-Type', 'image/png')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+    // Muestra la información al escanear el QR (Vista para celular)
+    public function publicShow($uuid)
+    {
+        $nicho = Nicho::with('bloque')->where('qr_uuid', $uuid)->firstOrFail();
+        // Retorna una vista simple pública
+        return view('nichos.public-info', compact('nicho'));
     }
 }

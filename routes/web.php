@@ -202,6 +202,15 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/nichos/{nicho}/edit', [NichoController::class, 'edit'])->name('nichos.edit');
     Route::put('/nichos/{nicho}', [NichoController::class, 'update'])->name('nichos.update');
     Route::delete('/nichos/{nicho}', [NichoController::class, 'destroy'])->name('nichos.destroy');
+    Route::post('nichos/reports', [NichoController::class, 'reports'])->name('nichos.reports');
+    // 1. Ruta para descargar/ver el QR del nicho. 
+    Route::get('nichos/{nicho}/qr', [NichoController::class, 'downloadQr'])->name('nichos.qr');
+    // 2. Ruta para Descargar la Imagen (Acción de descarga)
+    Route::get('nichos/{nicho}/qr-image', [NichoController::class, 'downloadQrImage'])->name('nichos.qr.image');
+    // Ruta PÚBLICA (simulada por ahora) donde aterriza el escaneo
+    // Esta es la ruta que mostrará "Aquí yace Juan Perez"
+    // Route::get('/ver-nicho/{uuid}', [NichoController::class, 'publicShow'])->name('public.nicho.info');
+
 
     //SOCIO-NICHO
     Route::get('/socio-nicho', [SocioNichoController::class, 'index'])->name('socio_nicho.index');
