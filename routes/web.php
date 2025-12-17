@@ -229,6 +229,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/beneficios/{beneficio}/edit', [BeneficioController::class, 'edit'])->name('beneficios.edit');
     Route::put('/beneficios/{beneficio}', [BeneficioController::class, 'update'])->name('beneficios.update');
     Route::delete('/beneficios/{beneficio}', [BeneficioController::class, 'destroy'])->name('beneficios.destroy');
+    Route::post('beneficios/reports', [BeneficioController::class, 'reports'])->name('beneficios.reports');
 
     //SERVICIOS
     Route::get('/servicios', [ServicioController::class, 'index'])->name('servicios.index');

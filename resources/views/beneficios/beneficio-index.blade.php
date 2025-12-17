@@ -1,69 +1,239 @@
 <x-app-layout>
-  <main class="main-content">
-    <x-app.navbar />
+    {{-- 1. ESTILOS --}}
+    <style>
+        /* ESTILO ALERTAS (VERDE PASTEL) */
+        .alert-success {
+            background-color: #e4f4db !important;
+            color: #708736 !important;
+            border-color: #e4f4db !important;
+            font-weight: 400 !important;
+            font-size: 14px !important;
+        }
+        .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
+        .alert-success .btn-close:hover { opacity: 1; }
 
-    <div class="container py-4">
-      <div class="alert alert-dark text-sm">
-        <strong style="font-size:22px">Gestión de Beneficios</strong>
-      </div>
+        /* Estilos para input groups y focus */
+        .input-group-text { border-color: #dee2e6; }
+        .form-control:focus, .form-select:focus {
+            border-color: #5ea6f7;
+            box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25);
+        }
 
-      @if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-      @if(session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
+        /* Clase para inputs "delgados" */
+        .compact-filter {
+            width: auto; 
+            min-width: 140px; 
+            max-width: 180px;
+        }
+    </style>
 
-      <div class="d-flex gap-2 mb-3">
-        <a href="{{ route('beneficios.create') }}" class="btn btn-success">
-          <i class="fa fa-plus"></i> Nuevo Beneficio
-        </a>
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+        <x-app.navbar />
 
-        <form method="GET" class="d-flex gap-2 ms-auto" style="max-width:620px">
-          <input name="q" value="{{ $q ?? request('q') }}" class="form-control" placeholder="Buscar por nombre, tipo o descripción…">
-          <button class="btn btn-outline-secondary">Buscar</button>
-          <a href="{{ route('beneficios.index') }}" class="btn btn-link">Limpiar</a>
-        </form>
-      </div>
+        <div class="container py-4">
+            
+            {{-- 2. ENCABEZADO --}}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                <div class="mb-3 mb-md-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Gestión de Beneficios</h3>
+                        <span class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+                            Total: {{ $beneficios->total() }}
+                        </span>
+                    </div>
+                    <p class="mb-0 text-secondary text-sm">Administración de tipos de beneficios, tarifas y costos.</p>
+                </div>
 
-      <div class="card">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle text-center">
-              <thead class="table-dark">
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Valor</th>
-                  <th style="width:170px;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($beneficios as $b)
-                  <tr>
-                    <td>{{ $b->id }}</td>
-                    <td class="text-start">{{ $b->nombre }}</td>
-                    <td><span class="badge bg-secondary">{{ $b->tipo }}</span></td>
-                    <td>{{ is_null($b->valor) ? '—' : number_format($b->valor, 2) }}</td>
-                    <td>
-                      <a href="{{ route('beneficios.show',$b) }}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a>
-                      <a href="{{ route('beneficios.edit',$b) }}" class="btn btn-sm btn-warning"><i class="fa fa-pen"></i></a>
-                      <form action="{{ route('beneficios.destroy',$b) }}" method="POST" class="d-inline"
-                            onsubmit="return confirm('¿Eliminar beneficio {{ $b->nombre }}?')">
-                        @csrf @method('DELETE')
-                        <button class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                      </form>
-                    </td>
-                  </tr>
-                @empty
-                  <tr><td colspan="5" class="text-muted py-4">No hay beneficios.</td></tr>
-                @endforelse
-              </tbody>
-            </table>
-          </div>
+                {{-- Botón Nuevo (Abre Modal) --}}
+                <button type="button" class="btn btn-success px-4 open-modal" 
+                        style="height: fit-content;"
+                        data-url="{{ route('beneficios.create') }}">
+                    <i class="fa-solid fa-plus me-2"></i> Nuevo Beneficio
+                </button>
+            </div>
 
-          <div class="mt-3">{{ $beneficios->links() }}</div>
+            {{-- 3. ALERTAS --}}
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show alert-temporal mb-3" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="alert alert-danger text-white alert-dismissible fade show alert-temporal mb-3" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            {{-- 4. FORMULARIO Y FILTROS --}}
+            {{-- Asegúrate de crear la ruta POST beneficios/reports en web.php --}}
+            <form action="{{ route('beneficios.reports') }}" method="POST" id="reportForm">
+                @csrf
+                {{-- Input oculto para mantener búsqueda en reporte --}}
+                <input type="hidden" name="q" value="{{ request('q') }}">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                    
+                    {{-- Botón Generar Reporte --}}
+                    <div class="dropdown w-100 w-md-auto">
+                        <button class="btn text-white dropdown-toggle mb-0 px-4 w-100 w-md-auto" 
+                                style="background-color: #5ea6f7; border-radius: 6px; font-weight: 600;" 
+                                type="button" id="dropdownGenerate" data-bs-toggle="dropdown" aria-expanded="false">
+                            Generar Reporte
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownGenerate">
+                            <li><button type="submit" name="report_type" value="pdf" class="dropdown-item"><i class="fas fa-file-pdf text-danger me-2"></i> PDF</button></li>
+                            <li><button type="submit" name="report_type" value="excel" class="dropdown-item"><i class="fas fa-file-excel text-success me-2"></i> Excel</button></li>
+                        </ul>
+                    </div>
+
+                    {{-- Filtro Buscador --}}
+                    <div class="d-flex gap-2 w-100 w-md-auto justify-content-end">
+                        <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter">
+                            <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control border-0 ps-1 shadow-none" 
+                                   placeholder="Buscar..." id="searchInput" 
+                                   value="{{ request('q') }}">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 5. TABLA --}}
+                <div class="card shadow-sm border">
+                    <div class="card-body p-3">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle text-center mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;"></th>
+                                        <th style="width: 50px;">ID</th>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Tipo</th>
+                                        <th>Valor ($)</th>
+                                        <th style="width:140px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($beneficios as $b)
+                                        <tr>
+                                            {{-- Checkbox --}}
+                                            <td><input type="checkbox" name="ids[]" value="{{ $b->id }}" class="check-item" style="cursor: pointer;"></td>
+                                            
+                                            <td class="fw-bold text-secondary">{{ $b->id }}</td>
+                                            <td class="fw-bold text-dark">{{ $b->codigo }}</td>
+                                            <td class="text-start ps-4">{{ $b->nombre }}</td>
+                                            <td><span class="badge border text-dark bg-light">{{ $b->tipo }}</span></td>
+                                            <td class="fw-bold text-end pe-4">{{ $b->valor ? number_format($b->valor, 2) : '-' }}</td>
+
+                                            {{-- Acciones --}}
+                                            <td>
+                                                {{-- Ver (Modal) --}}
+                                                <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal" 
+                                                        data-url="{{ route('beneficios.show', $b) }}" title="Ver">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                {{-- Editar (Modal) --}}
+                                                <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal" 
+                                                        data-url="{{ route('beneficios.edit', $b) }}" title="Editar">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                </button>
+                                                {{-- Eliminar (SweetAlert) --}}
+                                                <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
+                                                        data-url="{{ route('beneficios.destroy', $b) }}"
+                                                        data-item="{{ $b->codigo }} - {{ $b->nombre }}" title="Eliminar">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="7" class="text-center py-4 text-muted">No se encontraron beneficios.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-end">{{ $beneficios->links() }}</div>
+                    </div>
+                </div>
+            </form>
+
+            <form id="deleteForm" method="POST" action="" style="display:none;">@csrf @method('DELETE')</form>
         </div>
-      </div>
-    </div>
 
-    <x-app.footer />
-  </main>
+        {{-- MODAL DINÁMICO --}}
+        <div class="modal fade" id="dynamicModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    {{-- Aquí se inyectan las vistas parciales (create, edit, show) --}}
+                </div>
+            </div>
+        </div>
+
+        <x-app.footer />
+
+        {{-- SCRIPTS --}}
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Alertas Temporales
+                setTimeout(() => { 
+                    document.querySelectorAll('.alert-temporal').forEach(alert => { 
+                        alert.style.transition = "opacity 0.5s"; 
+                        alert.style.opacity = 0; 
+                        setTimeout(() => alert.remove(), 500); 
+                    }); 
+                }, 3000);
+
+                // Filtro Buscador
+                const searchInput = document.getElementById('searchInput'); 
+                function applyFilters() { 
+                    window.location.href = "{{ route('beneficios.index') }}?q=" + encodeURIComponent(searchInput.value); 
+                }
+                if(searchInput) searchInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyFilters(); } });
+
+                // Modal AJAX
+                const modalEl = document.getElementById('dynamicModal');
+                const modal = new bootstrap.Modal(modalEl);
+                document.querySelectorAll('.open-modal').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        modalEl.querySelector('.modal-content').innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-primary"></div></div>';
+                        modal.show();
+                        fetch(this.getAttribute('data-url'))
+                            .then(r => r.text())
+                            .then(h => { 
+                                modalEl.querySelector('.modal-content').innerHTML = h; 
+                            });
+                    });
+                });
+
+                // SweetAlert Eliminar
+                document.querySelectorAll('.js-delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        Swal.fire({
+                            title: '¿Eliminar Beneficio?', 
+                            html: `¿Deseas eliminar <b>"${this.getAttribute('data-item')}"</b>?`, 
+                            icon: 'warning', 
+                            showCancelButton: true, 
+                            confirmButtonColor: '#d33', 
+                            cancelButtonColor: '#3085d6', 
+                            confirmButtonText: 'Sí, eliminar',
+                            cancelButtonText: 'Cancelar'
+                        }).then((r) => { 
+                            if (r.isConfirmed) { 
+                                const f = document.getElementById('deleteForm'); 
+                                f.action = this.getAttribute('data-url'); 
+                                f.submit(); 
+                            } 
+                        });
+                    });
+                });
+            });
+
+            function toggleSelectAll() { 
+                const c = document.getElementById('selectAll').checked; 
+                document.querySelectorAll('.check-item').forEach(x => x.checked = c); 
+            }
+        </script>
+    </main>
 </x-app-layout>

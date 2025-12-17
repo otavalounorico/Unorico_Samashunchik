@@ -45,5 +45,7 @@ class DatabaseSeeder extends Seeder
 
         // Luego se crean los catálogos
         $this->call(CatalogosSeeder::class);
+        
+        $this->call(BeneficioSeeder::class);
     }
 }
