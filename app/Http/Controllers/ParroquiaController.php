@@ -91,6 +91,36 @@ class ParroquiaController extends Controller
         );
     }
 
+    // 1. Método para el Modal de CREAR
+    public function create()
+    {
+        $cantones = Canton::orderBy('nombre')->get();
+        
+        // Variable para controlar si se muestra solo el form o el layout completo
+        $isModal = request()->ajax(); 
+        
+        return view('parroquias.parroquia-create', compact('cantones', 'isModal'));
+    }
+
+    // 2. Método para el Modal de EDITAR
+    public function edit(Parroquia $parroquia)
+    {
+        $cantones = Canton::orderBy('nombre')->get();
+        $isModal = request()->ajax();
+
+        return view('parroquias.parroquia-edit', compact('parroquia', 'cantones', 'isModal'));
+    }
+
+    // 3. Método para el Modal de VER (Show)
+    public function show(Parroquia $parroquia)
+    {
+        // Cargamos la relación del cantón para mostrar el nombre
+        $parroquia->load('canton');
+        $isModal = request()->ajax();
+
+        return view('parroquias.parroquia-show', compact('parroquia', 'isModal'));
+    }
+
     // 👇 MÉTODO CORREGIDO: GENERAR REPORTES
     public function generateReports(Request $request)
     {

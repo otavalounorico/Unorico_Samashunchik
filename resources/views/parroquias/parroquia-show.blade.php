@@ -1,35 +1,74 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-app.navbar />
-        <div class="px-5 py-4 container-fluid">
-            <div class="alert alert-dark text-sm">
-                <strong style="font-size:24px;">Parroquia: {{ $parroquia->nombre }}</strong>
-            </div>
+{{-- CABECERA DEL MODAL (Azul Informativo) --}}
+<div class="modal-header bg-info text-white border-bottom-0 pb-0">
+    <h5 class="modal-title fw-bold">Detalle de la Parroquia</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
 
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div><b>ID:</b> {{ $parroquia->id }}</div>
-                    <div><b>Cantón:</b> {{ $parroquia->canton->nombre }}</div>
-                    <div><b>Nombre:</b> {{ $parroquia->nombre }}</div>
-                </div>
-            </div>
-
-            <h5>Comunidades</h5>
-            <div class="card">
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        @forelse($parroquia->comunidades as $c)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>{{ $c->nombre }}</span>
-                                <a href="{{ route('comunidades.edit',$c) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                            </li>
-                        @empty
-                            <li class="list-group-item text-muted">Sin comunidades</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
+{{-- CUERPO DEL MODAL --}}
+<div class="modal-body pt-3">
+    
+    {{-- Tarjeta destacada para Código e ID --}}
+    <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3 p-3 shadow-sm">
+        <div>
+            <small class="d-block text-muted text-uppercase" style="font-size: 0.7rem;">Código</small>
+            <span class="fw-bold text-dark fs-5">{{ $parroquia->codigo }}</span>
         </div>
-        <x-app.footer />
-    </main>
-</x-app-layout>
+        <div class="text-end border-start ps-3">
+            <small class="d-block text-muted text-uppercase" style="font-size: 0.7rem;">ID Interno</small>
+            <span class="fw-bold text-dark fs-5">#{{ $parroquia->id }}</span>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        {{-- Información General --}}
+        <div class="col-12">
+            <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">Información General</h6>
+        </div>
+
+        <div class="col-6">
+            <label class="d-block text-muted small mb-0">Nombre de la Parroquia</label>
+            <div class="fw-bold text-dark fs-6">{{ $parroquia->nombre }}</div>
+        </div>
+
+        <div class="col-6">
+            <label class="d-block text-muted small mb-0">Cantón Perteneciente</label>
+            <div class="fw-bold text-dark fs-6">{{ $parroquia->canton->nombre }}</div>
+        </div>
+
+        {{-- Comunidades Asociadas --}}
+        <div class="col-12 mt-3">
+            <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">
+                Comunidades Asociadas <span class="badge bg-primary ms-1">{{ $parroquia->comunidades->count() }}</span>
+            </h6>
+        </div>
+
+        <div class="col-12">
+            @if($parroquia->comunidades->count() > 0)
+                <div class="bg-light p-3 rounded border">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach($parroquia->comunidades as $comunidad)
+                            <span class="badge bg-white text-dark border shadow-sm">
+                                <i class="fas fa-users text-success me-1" style="font-size: 0.7rem;"></i> 
+                                {{ $comunidad->nombre }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <div class="text-muted small fst-italic">No hay comunidades registradas en esta parroquia.</div>
+            @endif
+        </div>
+
+        {{-- AUDITORÍA --}}
+        <div class="col-12 mt-3 pt-2 border-top d-flex justify-content-between text-xs text-muted">
+            {{-- Usuario logueado --}}
+            <span>Registrado por: <strong>{{ auth()->user()->name ?? 'Sistema' }}</strong></span>
+            <span>Fecha: {{ $parroquia->created_at ? $parroquia->created_at->format('d/m/Y H:i') : '—' }}</span>
+        </div>
+    </div>
+</div>
+
+{{-- PIE DEL MODAL --}}
+<div class="modal-footer border-top-0 pt-0">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+</div>
