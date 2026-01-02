@@ -137,6 +137,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('parroquias/{parroquia}', [ParroquiaController::class, 'update'])->name('parroquias.update');
     Route::delete('parroquias/{parroquia}', [ParroquiaController::class, 'destroy'])->name('parroquias.destroy');
     Route::post('/parroquias/reportes', [ParroquiaController::class, 'generateReports'])->name('parroquias.reports');
+    Route::get('cantones/{canton}/parroquias', [ParroquiaController::class, 'byCanton'])->name('cantones.parroquias');
 
     // =========================
     // Comunidades

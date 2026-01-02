@@ -1,71 +1,64 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-app.navbar />
+{{-- CABECERA DEL MODAL --}}
+<div class="modal-header bg-warning text-dark">
+    <h5 class="modal-title fw-bold">Editar Comunidad</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
 
-        <div class="px-5 py-4 container-fluid">
-            <div class="alert alert-dark text-sm"><strong style="font-size:24px;">Editar Comunidad</strong></div>
+{{-- FORMULARIO --}}
+<form method="POST" action="{{ route('comunidades.update', $comunidad->id) }}">
+    @csrf @method('PUT')
+    
+    <div class="modal-body">
+        
+        @if ($errors->any())
+            <div class="alert alert-danger py-2 text-xs">
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+                </ul>
+            </div>
+        @endif
 
-            @if ($errors->any())
-                <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
-            @endif
+        {{-- Calculamos el cantón actual --}}
+        @php $cantonActual = $comunidad->parroquia->canton_id; @endphp
 
-            <form method="POST" action="{{ route('comunidades.update',$comunidad) }}" class="card card-body">
-                @csrf @method('PUT')
+        <div class="row g-3">
+            {{-- Código --}}
+            <div class="col-12">
+                <label class="form-label fw-bold text-muted">Código</label>
+                <input value="{{ $comunidad->codigo_unico ?? $comunidad->codigo }}" class="form-control bg-light" readonly>
+            </div>
 
-                @php $cantonActual = $comunidad->parroquia->canton_id; @endphp
+            {{-- Cantón --}}
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Cantón <span class="text-danger">*</span></label>
+                <select id="canton_select" class="form-select" required>
+                    @foreach(\App\Models\Canton::orderBy('nombre')->get(['id','nombre']) as $c)
+                        <option value="{{ $c->id }}" @selected($c->id == $cantonActual)>{{ $c->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Cantón</label>
-                        <select id="canton_select" class="form-select">
-                            @foreach(\App\Models\Canton::orderBy('nombre')->get(['id','nombre']) as $c)
-                                <option value="{{ $c->id }}" @selected($c->id == $cantonActual)>{{ $c->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+            {{-- Parroquia --}}
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Parroquia <span class="text-danger">*</span></label>
+                <select name="parroquia_id" id="parroquia_select" class="form-select" required>
+                    {{-- Cargamos las parroquias del cantón actual con PHP para que ya aparezcan listas --}}
+                    @foreach(\App\Models\Parroquia::where('canton_id', $cantonActual)->orderBy('nombre')->get() as $p)
+                        <option value="{{ $p->id }}" @selected($p->id == $comunidad->parroquia_id)>{{ $p->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Parroquia</label>
-                        <select name="parroquia_id" id="parroquia_select" class="form-select" required>
-                            <option value="">Cargando...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Nombre</label>
-                    <input name="nombre" value="{{ old('nombre',$comunidad->nombre) }}" class="form-control" required maxlength="255">
-                </div>
-
-                <div class="d-flex gap-2">
-                    <a href="{{ route('comunidades.index') }}" class="btn btn-light">Cancelar</a>
-                    <button class="btn btn-primary">Actualizar</button>
-                </div>
-            </form>
+            {{-- Nombre --}}
+            <div class="col-12">
+                <label class="form-label fw-bold">Nombre Comunidad <span class="text-danger">*</span></label>
+                <input name="nombre" value="{{ old('nombre', $comunidad->nombre) }}" class="form-control" required maxlength="255">
+            </div>
         </div>
+    </div>
 
-        <x-app.footer />
-    </main>
-
-    <script>
-        async function cargarParroquias(cantonId, parroquiaIdSeleccionada = null){
-            const parroquiaSelect = document.getElementById('parroquia_select');
-            parroquiaSelect.innerHTML = '<option value="">Cargando...</option>';
-            const res = await fetch(`/cantones/${cantonId}/parroquias`);
-            const data = await res.json();
-            parroquiaSelect.innerHTML = '<option value="">— Selecciona —</option>';
-            data.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id; opt.textContent = p.nombre;
-                if (parroquiaIdSeleccionada && Number(parroquiaIdSeleccionada) === Number(p.id)) opt.selected = true;
-                parroquiaSelect.appendChild(opt);
-            });
-        }
-        document.addEventListener('DOMContentLoaded', ()=>{
-            const cantonSelect = document.getElementById('canton_select');
-            const parroquiaActual = {{ $comunidad->parroquia_id }};
-            cargarParroquias(cantonSelect.value, parroquiaActual);
-            cantonSelect.addEventListener('change', (e)=> cargarParroquias(e.target.value));
-        });
-    </script>
-</x-app-layout>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-warning">Actualizar</button>
+    </div>
+</form>
