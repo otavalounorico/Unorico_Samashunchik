@@ -114,9 +114,4 @@ class UserController extends Controller
         return redirect()->back()->with('error', 'Tipo de reporte no válido.');
     }
 
-    // Antiguo
-    // {
-    //     $roles = Role::all(); // Obtener todos los roles disponibles
-    //     return view('user.user-edit', compact('user', 'roles')); // Retorna la vista de edición
-    // }
 }

@@ -1,23 +1,35 @@
 <x-app-layout>
     <style>
-        /* 1. CORRECCIÓN DE COLOR EXACTO (VERDE PASTEL) + LETRA FINA */
+        /* 1. ESTILOS DE ALERTAS (Originales) */
         .alert-success {
-            background-color: #e4f4db !important; /* El verde suave de tu imagen */
-            color: #708736 !important;           /* Texto verde oscuro */
-            border-color: #e4f4db !important;    /* Borde verde suave */
-            font-weight: 400 !important;         /* 400 es letra Normal (Sin negrilla) */
-            font-size: 14px !important;          /* Letra un poco más pequeña */
+            background-color: #e4f4db !important;
+            color: #708736 !important;
+            border-color: #e4f4db !important;
+            font-weight: 400 !important;
+            font-size: 14px !important;
         }
-        
-        /* Corrección para que la X de cerrar se vea oscura (no blanca) */
         .alert-success .btn-close {
             filter: none !important; 
             opacity: 0.5;
-            color: #708736; /* Le puse el mismo color del texto para que combine */
+            color: #708736;
         }
         .alert-success .btn-close:hover {
             opacity: 1;
         }
+        .alert-danger {
+            background-color: #fde1e1 !important; 
+            color: #cf304a !important; 
+            border-color: #fde1e1 !important; 
+            font-weight: 400 !important; 
+            font-size: 14px !important; 
+        }
+        .alert-danger .btn-close { filter: none !important; opacity: 0.5; color: #cf304a; }
+
+        /* 2. ESTILOS DEL BUSCADOR (Formato Parroquias) */
+        .input-group-text { border-color: #dee2e6; }
+        .form-control:focus, .form-select:focus { border-color: #5ea6f7; box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25); }
+        /* Esta clase controla el tamaño compacto */
+        .compact-filter { width: auto; min-width: 140px; max-width: 250px; } 
     </style>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
@@ -28,7 +40,6 @@
             <div class="mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Administración de Usuarios</h3>
-                    {{-- Total de registros (Opcional, igual que en cantones) --}}
                     <span class="badge bg-light text-dark border" style="font-size: 0.8rem;">
                         Total: {{ $users->total() }}
                     </span>
@@ -53,10 +64,12 @@
             <form action="{{ route('users.generateReports') }}" method="POST" id="reportForm">
                 @csrf
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                {{-- AQUÍ ESTÁ EL CAMBIO: FORMATO FLEX DE PARROQUIAS --}}
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
                     
-                    <div class="dropdown">
-                        <button class="btn text-white dropdown-toggle mb-0 px-4" 
+                    {{-- Lado Izquierdo: Botón Reporte (Igual que antes pero con w-100 responsive) --}}
+                    <div class="dropdown w-100 w-md-auto">
+                        <button class="btn text-white dropdown-toggle mb-0 px-4 w-100 w-md-auto" 
                                 style="background-color: #5ea6f7; border-radius: 6px; font-weight: 600;" 
                                 type="button" id="dropdownGenerate" data-bs-toggle="dropdown" aria-expanded="false">
                             Generar Reporte
@@ -67,12 +80,13 @@
                         </ul>
                     </div>
 
-                    <div class="position-relative">
-                        <div class="input-group bg-white border rounded overflow-hidden">
+                    {{-- Lado Derecho: Buscador Compacto (Formato Parroquias) --}}
+                    <div class="d-flex gap-2 w-100 w-md-auto justify-content-end">
+                        <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter">
                             <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control border-0 ps-2 shadow-none" 
+                            <input type="text" class="form-control border-0 ps-1 shadow-none" 
                                    placeholder="Buscar usuario..." id="searchInput" 
-                                   value="{{ request('search') }}" style="min-width: 250px;">
+                                   value="{{ request('search') }}">
                         </div>
                     </div>
                 </div>
@@ -84,7 +98,6 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th style="width: 50px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;"></th>
-                                        {{-- COLUMNA # AGREGADA --}}
                                         <th style="width: 50px;">#</th>
                                         <th>Código</th>
                                         <th>Nombre</th>
@@ -101,7 +114,6 @@
                                         <tr>
                                             <td><input type="checkbox" name="users[]" value="{{ $user->id }}" style="cursor: pointer;"></td>
                                             
-                                            {{-- CONTADOR DEL LOOP --}}
                                             <td class="fw-bold text-secondary">
                                                 {{ $users->firstItem() + $loop->index }}
                                             </td>
@@ -127,18 +139,13 @@
                                             </td>
                                             
                                             <td>
+                                                {{-- BOTÓN EDITAR (Tu código original) --}}
                                                 <button type="button" class="btn btn-sm btn-warning mb-0" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#editUserModal"
                                                         data-id="{{ $user->id }}"
-                                                        data-name="{{ $user->name }}"
-                                                        data-email="{{ $user->email }}"
-                                                        data-phone="{{ $user->phone }}"
-                                                        data-location="{{ $user->location }}"
-                                                        data-role="{{ $user->roles->first()->id ?? '' }}"
-                                                        data-status="{{ $user->status ? 1 : 0 }}" 
                                                         title="Editar">
-                                                    <i class="fa-solid fa-pen-to-square" style="font-size:.9rem;"></i>
+                                                    <i class="fa-solid fa-pen-to-square" style="font-size:.8rem;"></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -149,7 +156,6 @@
                             </table>
                         </div>
                         
-                        {{-- PAGINACIÓN AGREGADA (Importante para que funcione el firstItem) --}}
                         @if(method_exists($users, 'links'))
                             <div class="mt-3 d-flex justify-content-end">
                                 {{ $users->links() }}
@@ -160,66 +166,16 @@
             </form>
         </div>
 
+        {{-- MODAL VACÍO (Tu código original) --}}
         <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-dark text-white">
-                        <h5 class="modal-title text-white" id="editUserModalLabel">Editar Usuario</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content" id="modal-content-wrapper">
+                    {{-- Aquí se cargará la vista externa --}}
+                    <div class="modal-body text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
                     </div>
-                    
-                    <form id="editUserForm" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Nombre</label>
-                                    <input type="text" name="name" id="modalName" class="form-control" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Email</label>
-                                    <input type="email" name="email" id="modalEmail" class="form-control" required>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Teléfono</label>
-                                    <input type="text" name="phone" id="modalPhone" class="form-control">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Ubicación</label>
-                                    <input type="text" name="location" id="modalLocation" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Rol</label>
-                                    <select name="role_id" id="modalRole" class="form-control" required>
-                                        @foreach ($roles as $roleId => $roleName)
-                                            <option value="{{ $roleId }}">{{ ucfirst($roleName) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Estado</label>
-                                    <select name="status" id="modalStatus" class="form-control" required>
-                                        <option value="1">Activo</option>
-                                        <option value="0">Inactivo</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -229,7 +185,7 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 
-                // 1. Ocultar alertas automáticamente
+                // 1. Ocultar alertas
                 setTimeout(function () {
                     document.querySelectorAll('.alert-temporal').forEach(alert => {
                         alert.style.transition = "opacity 0.5s";
@@ -240,39 +196,55 @@
 
                 // 2. Buscador
                 const searchInput = document.getElementById('searchInput');
-                searchInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); 
-                        const searchTerm = this.value;
-                        // Asegúrate de que esta ruta exista
-                        window.location.href = "{{ route('users-management') }}?search=" + encodeURIComponent(searchTerm);
-                    }
-                });
+                if(searchInput){
+                    searchInput.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); 
+                            const searchTerm = this.value;
+                            window.location.href = "{{ route('users-management') }}?search=" + encodeURIComponent(searchTerm);
+                        }
+                    });
+                }
 
-                // 3. Lógica del Modal
+                // 3. Lógica del Modal (AJAX / FETCH)
                 var editUserModal = document.getElementById('editUserModal');
+                
                 editUserModal.addEventListener('show.bs.modal', function (event) {
                     var button = event.relatedTarget;
-                    
-                    var id = button.getAttribute('data-id');
-                    var name = button.getAttribute('data-name');
-                    var email = button.getAttribute('data-email');
-                    var phone = button.getAttribute('data-phone');
-                    var location = button.getAttribute('data-location');
-                    var role = button.getAttribute('data-role');
-                    var status = button.getAttribute('data-status');
+                    var userId = button.getAttribute('data-id');
+                    var modalContent = document.getElementById('modal-content-wrapper');
 
-                    // Actualizar ruta del form
-                    var actionUrl = "{{ route('users.update', 'ID_PLACEHOLDER') }}";
-                    document.getElementById('editUserForm').action = actionUrl.replace('ID_PLACEHOLDER', id);
+                    // URL: Ajusta '/users/' si tu ruta prefix es diferente
+                    var url = "/user/" + userId + "/edit"; 
 
-                    // Rellenar campos
-                    document.getElementById('modalName').value = name;
-                    document.getElementById('modalEmail').value = email;
-                    document.getElementById('modalPhone').value = (phone && phone !== 'N/A') ? phone : '';
-                    document.getElementById('modalLocation').value = (location && location !== 'N/A') ? location : '';
-                    document.getElementById('modalRole').value = role;
-                    document.getElementById('modalStatus').value = status;
+                    // Mostrar cargando mientras llega la respuesta
+                    modalContent.innerHTML = `
+                        <div class="modal-body text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-secondary">Cargando formulario...</p>
+                        </div>
+                    `;
+
+                    // Petición al servidor
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Error al cargar');
+                            return response.text();
+                        })
+                        .then(html => {
+                            // Pegar el HTML que devuelve el controlador
+                            modalContent.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            modalContent.innerHTML = `
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Error</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">No se pudo cargar la información.</div>
+                            `;
+                        });
                 });
             });
 
