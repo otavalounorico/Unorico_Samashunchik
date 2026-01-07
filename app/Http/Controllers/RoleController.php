@@ -43,6 +43,14 @@ class RoleController extends Controller
             ->with('ok', 'Rol creado correctamente.');
     }
 
+    // --- AGREGA ESTA FUNCIÓN QUE FALTA ---
+    public function edit(Role $role)
+    {
+        // Esto carga la vista "edit.blade.php" que creamos antes
+        // y le envía los datos del rol ($role)
+        return view('roles.role-edit', compact('role'));
+    }
+
     // Actualizar rol (Desde el Modal de Editar)
     public function update(Request $request, Role $role)
     {

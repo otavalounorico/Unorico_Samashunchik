@@ -1,38 +1,45 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-        <x-app.navbar />
+{{-- CABECERA (Amarilla para Editar) --}}
+<div class="modal-header bg-warning text-dark">
+    <h5 class="modal-title fw-bold">Editar Rol</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
 
-        <div class="px-5 py-4 container-fluid">
-            <div class="row">
-                <div class="col-12">
+{{-- FORMULARIO --}}
+{{-- Nota: Usamos $role->id en la ruta --}}
+<form method="POST" action="{{ route('roles.update', $role->id) }}">
+    @csrf 
+    @method('PUT')
 
-                    <div class="alert alert-dark text-sm" role="alert">
-                        <strong style="font-size: 24px;">Editar Rol: {{ $role->name }}</strong>
-                    </div>
+    <div class="modal-body">
+        
+        {{-- Errores --}}
+        @if ($errors->any())
+            <div class="alert alert-danger py-2 text-xs">
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+                </ul>
+            </div>
+        @endif
 
-                    <div class="card">
-                        <div class="card-body">
-                            <form action="{{ route('roles.update',$role) }}" method="POST">
-                                @csrf @method('PUT')
+        <div class="row g-3">
+            {{-- Código (Solo lectura) --}}
+            <div class="col-12">
+                <label class="form-label fw-bold text-muted">Código</label>
+                {{-- Mostramos el código si existe, sino guiones --}}
+                <input value="{{ $role->codigo ?? '---' }}" class="form-control bg-light" readonly>
+            </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label">Nombre del rol</label>
-                                    <input type="text" name="name" class="form-control" value="{{ old('name',$role->name) }}" required>
-                                    @error('name') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-success">💾 Actualizar</button>
-                                    <a href="{{ route('roles.index') }}" class="btn btn-secondary">⬅️ Volver</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                </div>
+            {{-- Nombre del Rol --}}
+            <div class="col-12">
+                <label class="form-label fw-bold">Nombre del Rol <span class="text-danger">*</span></label>
+                <input type="text" name="name" value="{{ old('name', $role->name) }}" class="form-control" required>
             </div>
         </div>
+    </div>
 
-        <x-app.footer />
-    </main>
-</x-app-layout>
+    {{-- PIE DEL MODAL --}}
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-warning">Actualizar</button>
+    </div>
+</form>

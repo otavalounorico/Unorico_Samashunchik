@@ -1,22 +1,17 @@
 <x-app-layout>
-    {{-- ESTILOS PRESERVADOS DE TU REFERENCIA --}}
+    {{-- 1. ESTILOS (Formato Parroquias) --}}
     <style>
-        /* Alerta Verde Pastel */
-        .alert-success {
-            background-color: #e4f4db !important;
-            color: #708736 !important;
-            border-color: #e4f4db !important;
-            font-weight: 400 !important;
-            font-size: 14px !important;
-        }
-        .alert-success .btn-close {
-            filter: none !important;
-            opacity: 0.5;
-            color: #708736;
-        }
-        .alert-success .btn-close:hover {
-            opacity: 1;
-        }
+        /* ALERTAS */
+        .alert-success { background-color: #e4f4db !important; color: #708736 !important; border-color: #e4f4db !important; font-weight: 400 !important; font-size: 14px !important; }
+        .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
+        .alert-success .btn-close:hover { opacity: 1; }
+        .alert-danger { background-color: #fde1e1 !important; color: #cf304a !important; border-color: #fde1e1 !important; font-weight: 400 !important; font-size: 14px !important; }
+        .alert-danger .btn-close { filter: none !important; opacity: 0.5; color: #cf304a; }
+
+        /* INPUTS Y BADGES */
+        .input-group-text { border-color: #dee2e6; }
+        .form-control:focus, .form-select:focus { border-color: #5ea6f7; box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25); }
+        .compact-filter { width: auto; min-width: 140px; max-width: 250px; } 
     </style>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
@@ -24,43 +19,44 @@
 
         <div class="container py-4">
             
-            {{-- 1. ENCABEZADO (TÍTULO Y DESCRIPCIÓN) --}}
-            <div class="mb-4">
-                <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Administrador de Permisos</h3>
-                <p class="mb-0 text-secondary text-sm">Asigna y gestiona los permisos correspondientes a cada rol del sistema.</p>
+            {{-- 2. ENCABEZADO --}}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                <div class="mb-3 mb-md-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Matriz de Permisos</h3>
+                        <span class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+                            Roles: {{ $roles->count() }}
+                        </span>
+                    </div>
+                    <p class="mb-0 text-secondary text-sm">Gestiona masivamente los permisos de todos los roles.</p>
+                </div>
             </div>
 
-            {{-- MENSAJES DE SESIÓN (CON EL NUEVO ESTILO) --}}
+            {{-- 3. ALERTAS --}}
             @if(session('ok'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert" id="ok-msg">
+                <div class="alert alert-success alert-dismissible fade show alert-temporal mb-3" role="alert" id="ok-msg">
                     <i class="fas fa-check-circle me-2"></i> {{ session('ok') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
             @if(session('error'))
-                <div class="alert alert-danger text-white alert-dismissible fade show" role="alert" id="err-msg">
+                <div class="alert alert-danger text-white alert-dismissible fade show alert-temporal mb-3" role="alert" id="err-msg">
                     <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
-            {{-- 2. BARRA DE ACCIONES Y BUSCADOR --}}
+            {{-- 4. BARRA DE HERRAMIENTAS (Buscador a la derecha) --}}
             <div class="d-flex justify-content-end align-items-center mb-4">
-                {{-- Buscador Estilizado --}}
-                <div class="position-relative">
-                    <div class="input-group bg-white border rounded overflow-hidden">
-                        <span class="input-group-text bg-white border-0 pe-1 text-secondary">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input type="text" id="perm-search" 
-                               class="form-control border-0 ps-2 shadow-none" 
-                               placeholder="Buscar permiso (Presiona '/')..." 
-                               style="min-width: 250px;">
-                    </div>
+                <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter" style="min-width: 300px;">
+                    <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
+                    <input type="text" id="perm-search" 
+                           class="form-control border-0 ps-1 shadow-none" 
+                           placeholder="Buscar permiso ...">
                 </div>
             </div>
 
-            {{-- TARJETA CON LA TABLA MATRIZ --}}
+            {{-- 5. TABLA MATRIZ --}}
             <div class="card shadow-sm border">
                 <div class="card-body p-0">
                     <form id="matrix-form" action="{{ route('roles.permissions.manager.update') }}" method="POST">
@@ -69,24 +65,22 @@
                             <table class="table table-hover table-bordered align-middle text-center mb-0">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th class="text-start" style="min-width: 280px;">Permisos</th>
+                                        <th class="text-start ps-4" style="min-width: 280px;">Nombre del Permiso</th>
 
                                         @foreach($roles as $role)
                                             <th style="min-width: 160px;">
-                                                <div class="d-flex flex-column align-items-center gap-1">
-                                                    <span class="fw-semibold">
+                                                <div class="d-flex flex-column align-items-center gap-1 py-2">
+                                                    <span class="fw-semibold text-white">
                                                         {{ $role->name }}
                                                         @if($role->name === 'Administrador')
-                                                            <span class="badge bg-secondary ms-1" title="Columna bloqueada">
-                                                                <i class="fa-solid fa-lock"></i>
-                                                            </span>
+                                                            <i class="fa-solid fa-lock ms-1 text-white-50" title="Bloqueado"></i>
                                                         @endif
                                                     </span>
 
                                                     @if($role->name !== 'Administrador')
-                                                        <div class="btn-group btn-group-sm" role="group">
-                                                            <button class="btn btn-outline-secondary col-check-all" data-role="{{ $role->id }}" type="button">Todas</button>
-                                                            <button class="btn btn-outline-secondary col-uncheck-all" data-role="{{ $role->id }}" type="button">Ninguna</button>
+                                                        <div class="btn-group btn-group-sm mt-1" role="group">
+                                                            <button class="btn btn-outline-light btn-xs col-check-all" data-role="{{ $role->id }}" type="button" style="font-size: 0.7rem; padding: 2px 5px;">Todas</button>
+                                                            <button class="btn btn-outline-light btn-xs col-uncheck-all" data-role="{{ $role->id }}" type="button" style="font-size: 0.7rem; padding: 2px 5px;">Ninguna</button>
                                                         </div>
                                                     @endif
                                                 </div>
@@ -98,15 +92,15 @@
                                 <tbody id="perm-tbody">
                                     @foreach($permissions as $perm)
                                         <tr class="perm-row">
-                                            <td class="text-start perm-name" data-name="{{ strtolower($perm->name) }}">
+                                            <td class="text-start ps-4 perm-name fw-bold text-secondary" data-name="{{ strtolower($perm->name) }}">
                                                 {{ $perm->name }}
                                             </td>
 
                                             @foreach($roles as $role)
-                                                <td>
+                                                <td class="{{ $role->name === 'Administrador' ? 'bg-light' : '' }}">
                                                     <input type="checkbox"
                                                            class="form-check-input perm-cell"
-                                                           style="cursor: pointer;"
+                                                           style="cursor: pointer; width: 1.2em; height: 1.2em;"
                                                            name="permission_role[{{ $perm->id }}][{{ $role->id }}]"
                                                            @checked(in_array($perm->id, $rolePerms[$role->id] ?? []))
                                                            @disabled($role->name === 'Administrador')>
@@ -118,10 +112,10 @@
                             </table>
                         </div>
 
-                        {{-- Footer de la tarjeta para el botón de guardar --}}
-                        <div class="p-3 border-top text-end bg-light">
-                            <button class="btn btn-primary mb-0">
-                                <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+                        {{-- Footer con Botón Guardar --}}
+                        <div class="card-footer bg-white border-top d-flex justify-content-end p-3">
+                            <button class="btn btn-primary mb-0 px-4">
+                                <i class="fa-solid fa-floppy-disk me-2"></i> Guardar Cambios
                             </button>
                         </div>
                     </form>
@@ -134,16 +128,15 @@
     </main>
 
     <script>
-        // 1. Foco rápido con "/"
+        // 1. Foco rápido
         document.addEventListener('keydown', e => {
-            // Solo si no estamos escribiendo en otro input
             if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault();
                 document.getElementById('perm-search').focus();
             }
         });
 
-        // 2. Buscar permisos (Filtrado)
+        // 2. Buscador
         const search = document.getElementById('perm-search');
         search.addEventListener('input', function () {
             const q = this.value.trim().toLowerCase();
@@ -153,7 +146,7 @@
             });
         });
 
-        // 3. Seleccionar/limpiar toda la columna de un rol
+        // 3. Seleccionar columnas
         document.querySelectorAll('.col-check-all').forEach(btn => {
             btn.addEventListener('click', function () {
                 const roleId = this.getAttribute('data-role');
@@ -171,17 +164,13 @@
             });
         });
 
-        // 4. Ocultar mensajes flash
-        (function(){
-            ['ok-msg','err-msg'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                setTimeout(() => {
-                    el.style.transition = "opacity .5s";
-                    el.style.opacity = 0;
-                    setTimeout(() => el.remove(), 500);
-                }, 4000);
+        // 4. Alertas temporales
+        setTimeout(function () {
+            document.querySelectorAll('.alert-temporal').forEach(alert => {
+                alert.style.transition = "opacity 0.5s";
+                alert.style.opacity = 0;
+                setTimeout(() => alert.remove(), 500);
             });
-        })();
+        }, 3000);
     </script>
 </x-app-layout>
