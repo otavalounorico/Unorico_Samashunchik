@@ -3,59 +3,61 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use App\Models\Role; // ✅ TU modelo (con código)
+use Spatie\Permission\Models\Permission; // ✅ Permiso de Spatie
 
 class PermissionManagerController extends Controller
 {
     public function index()
     {
-        // Si manejas varios guards, puedes filtrar por el que uses (normalmente 'web')
         $roles = Role::orderBy('name')->get();
         $permissions = Permission::orderBy('name')->get();
 
-        // Mapa: role_id => [permission_id, ...] para marcar checks
+        // Mapa para saber qué checks marcar
         $rolePerms = [];
         foreach ($roles as $role) {
+            // Usamos la relación permissions() de Spatie
             $rolePerms[$role->id] = $role->permissions->pluck('id')->all();
         }
 
-        // ✅ Usa SIEMPRE esta vista (coincide con la ruta): resources/views/roles/permissions-manager.blade.php
         return view('roles.role-permissions-manager', compact('roles', 'permissions', 'rolePerms'));
     }
 
     public function update(Request $request)
     {
-        // Matriz: permission_role[permission_id][role_id] = "on"
+        // La matriz viene del formulario
         $matrix = $request->input('permission_role', []);
 
         $roles = Role::all();
-        $locked = ['Administrador']; // ⛔ roles bloqueados
+        $locked = ['Administrador']; 
 
         foreach ($roles as $role) {
             if (in_array($role->name, $locked)) {
-                continue; // no tocar la columna del Admin
+                continue; 
             }
 
+            // Recolectamos IDs
             $newPermIds = [];
             foreach ($matrix as $permId => $byRole) {
                 if (isset($byRole[$role->id])) {
                     $newPermIds[] = (int) $permId;
                 }
             }
+            
+            // ✅ FUNCIÓN DE SPATIE: Guardamos
             $role->syncPermissions($newPermIds);
         }
 
-        // ✅ Asegura que el Admin tenga TODOS los permisos
+        // Aseguramos al Admin
         if ($admin = Role::where('name', 'Administrador')->first()) {
             $admin->syncPermissions(Permission::all());
         }
 
-        // Limpiar caché de spatie/permission
+        // Limpiar caché
         app('cache')
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
             ->forget(config('permission.cache.key'));
 
-        return back()->with('ok', 'Permisos actualizados.');
+        return back()->with('ok', 'La matriz de permisos ha sido actualizada correctamente para todos los roles.');
     }
 }
