@@ -188,20 +188,20 @@
                                                 {{-- Ver (Ajax Modal) --}}
                                                 <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal"
                                                     data-url="{{ route('comunidades.show', $c->id) }}" title="Ver">
-                                                    <i class="fa-solid fa-eye text-white"></i>
+                                                    <i class="fa-solid fa-eye text-white" style="font-size:.8rem;"></i>
                                                 </button>
 
                                                 {{-- Editar (Ajax Modal) --}}
                                                 <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal"
                                                     data-url="{{ route('comunidades.edit', $c->id) }}" title="Editar">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    <i class="fa-solid fa-pen-to-square"style="font-size:.8rem;"></i>
                                                 </button>
 
                                                 {{-- Eliminar (SweetAlert) --}}
                                                 <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                     data-url="{{ route('comunidades.destroy', $c) }}"
                                                     data-item="{{ $c->nombre }}">
-                                                    <i class="fa-solid fa-trash"></i>
+                                                    <i class="fa-solid fa-trash"style="font-size:.8rem;"></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -283,23 +283,17 @@
                         });
                     });
                 });
-                // ---------------------------------------------------------
-                // 5. LÓGICA DE CARGA EN CASCADA (Cantón -> Parroquias)
-                // ---------------------------------------------------------
-                // Usamos "delegación de eventos" (document.body) porque el select
-                // "canton_select" no existe al cargar la página, aparece después con el modal.
+
+                // 5. Carga Dinámica de Parroquias según Cantón
 
                 document.body.addEventListener('change', async function (e) {
-                    // Detectamos si el elemento que cambió tiene el ID 'canton_select'
                     if (e.target && e.target.id === 'canton_select') {
 
                         const cantonId = e.target.value;
                         const parroquiaSelect = document.getElementById('parroquia_select');
 
-                        // Si no existe el select de parroquia (por seguridad), no hacemos nada
                         if (!parroquiaSelect) return;
 
-                        // Mensaje de carga
                         parroquiaSelect.innerHTML = '<option value="">Cargando...</option>';
 
                         if (!cantonId) {
@@ -308,15 +302,13 @@
                         }
 
                         try {
-                            // IMPORTANTE: Ruta correcta para obtener parroquias
-                            // Asegúrate de que esta ruta '/cantones/{id}/parroquias' exista en tu web.php
+
                             const response = await fetch("{{ url('cantones') }}/" + cantonId + "/parroquias");
 
                             if (!response.ok) throw new Error('Error en la red');
 
                             const data = await response.json();
 
-                            // Llenamos el select
                             parroquiaSelect.innerHTML = '<option value="">— Selecciona —</option>';
                             data.forEach(p => {
                                 const opt = document.createElement('option');

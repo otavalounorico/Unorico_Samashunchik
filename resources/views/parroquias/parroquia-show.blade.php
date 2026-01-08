@@ -1,4 +1,12 @@
-{{-- CABECERA DEL MODAL (Azul Informativo) --}}
+
+<style>
+    .badge-oscuro {
+        background-color: #999da0ff !important; 
+        color: #ffffff !important;
+    }
+</style>
+
+{{-- CABECERA DEL MODAL --}}
 <div class="modal-header bg-info text-white border-bottom-0 pb-0">
     <h5 class="modal-title fw-bold">Detalle de la Parroquia</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -20,7 +28,6 @@
     </div>
 
     <div class="row g-3">
-        {{-- Información General --}}
         <div class="col-12">
             <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">Información General</h6>
         </div>
@@ -35,10 +42,9 @@
             <div class="fw-bold text-dark fs-6">{{ $parroquia->canton->nombre }}</div>
         </div>
 
-        {{-- Comunidades Asociadas --}}
         <div class="col-12 mt-3">
             <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">
-                Comunidades Asociadas <span class="badge bg-primary ms-1">{{ $parroquia->comunidades->count() }}</span>
+                Comunidades Asociadas <span class="badge badge-oscuro ms-1">{{ $parroquia->comunidades->count() }}</span>
             </h6>
         </div>
 

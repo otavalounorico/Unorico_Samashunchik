@@ -1,19 +1,17 @@
-{{-- CABECERA DEL MODAL --}}
-<div class="modal-header bg-dark text-white">
+{{-- CABECERA (Amarilla para Editar, igual que en Roles) --}}
+<div class="modal-header bg-warning text-dark">
     <h5 class="modal-title fw-bold">Editar Usuario</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
 {{-- FORMULARIO --}}
-{{-- Nota: Asegúrate de que $user->id se pase correctamente --}}
 <form method="POST" action="{{ route('users.update', $user->id) }}">
     @csrf 
     @method('PUT')
     
-    {{-- CUERPO DEL MODAL --}}
     <div class="modal-body">
         
-        {{-- Mostrar Errores de Validación --}}
+        {{-- Errores --}}
         @if ($errors->any())
             <div class="alert alert-danger py-2 text-xs">
                 <ul class="mb-0 ps-3">
@@ -76,7 +74,7 @@
     {{-- PIE DEL MODAL --}}
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        {{-- Usé btn-primary (Azul) para guardar, si prefieres el amarillo pon btn-warning --}}
-        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        {{-- Botón amarillo igual que en Roles --}}
+        <button type="submit" class="btn btn-warning">Actualizar</button>
     </div>
 </form>

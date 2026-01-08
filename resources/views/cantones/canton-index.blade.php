@@ -45,6 +45,7 @@
             box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25);
         }
 
+        /* ESTA CLASE CONTROLA EL TAMAÑO DEL BUSCADOR */
         .compact-filter {
             width: auto;
             min-width: 140px;
@@ -69,8 +70,7 @@
         <div class="container py-4">
 
             {{-- 2. ENCABEZADO --}}
-            <div
-                class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
                 <div class="mb-3 mb-md-0">
                     <div class="d-flex align-items-center gap-3">
                         <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Gestión de Cantones</h3>
@@ -102,19 +102,17 @@
                 </div>
             @endif
 
-            {{-- 4. FORMULARIO Y FILTROS --}}
-            <div class="row mb-4 justify-content-end">
-                <div class="col-md-4">
-                    <form method="GET" action="{{ route('cantones.index') }}">
-                        <div class="input-group bg-white border rounded overflow-hidden shadow-sm">
-                            <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i
-                                    class="fas fa-search"></i></span>
-                            <input type="text" name="q" value="{{ request('q') }}"
-                                class="form-control border-0 ps-2 shadow-none"
-                                placeholder="Buscar por código o nombre...">
-                        </div>
-                    </form>
-                </div>
+            {{-- 4. FORMULARIO Y FILTROS (MODIFICADO: SOLO BUSCADOR COMPACTO) --}}
+            <div class="d-flex justify-content-end mb-4">
+                <form method="GET" action="{{ route('cantones.index') }}">
+                    {{-- Aquí aplicamos la clase 'compact-filter' para que sea pequeño --}}
+                    <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter shadow-sm">
+                        <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
+                        <input type="text" name="q" value="{{ request('q') }}"
+                            class="form-control border-0 ps-1 shadow-none"
+                            placeholder="Buscar...">
+                    </div>
+                </form>
             </div>
 
             {{-- 5. TABLA --}}
@@ -124,48 +122,38 @@
                         <table class="table table-hover table-bordered align-middle text-center mb-0">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width: 40px;"><input type="checkbox" id="selectAll"
-                                            onclick="toggleSelectAll()"></th>
+                                    <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
                                     <th style="width: 50px;">#</th>
                                     <th style="width: 20%;">Código</th>
                                     <th class="text-start ps-4">Nombre del Cantón</th>
-                                    <th style="width:180px;">Acciones</th> {{-- Aumenté un poco el ancho --}}
+                                    <th style="width:180px;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($cantones as $canton)
                                     <tr>
-                                        <td><input type="checkbox" name="ids[]" value="{{ $canton->id }}"
-                                                class="check-item"></td>
-
-                                        {{-- Numeración visual --}}
+                                        <td><input type="checkbox" name="ids[]" value="{{ $canton->id }}" class="check-item"></td>
                                         <td class="fw-bold text-secondary">{{ $cantones->firstItem() + $loop->index }}</td>
-
-                                        {{-- Código --}}
                                         <td><span class="code-badge">{{ $canton->codigo ?? 'N/A' }}</span></td>
-
-                                        {{-- Nombre --}}
                                         <td class="fw-bold text-start ps-4 text-dark">{{ $canton->nombre }}</td>
-
-                                        {{-- Acciones --}}
                                         <td>
-                                            {{-- Ver (Ajax Modal) --}}
+                                            {{-- Ver --}}
                                             <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal"
                                                 data-url="{{ route('cantones.show', $canton->id) }}" title="Ver">
-                                                <i class="fa-solid fa-eye text-white"></i>
+                                                <i class="fa-solid fa-eye text-white" style="font-size:.8rem;"></i>
                                             </button>
 
-                                            {{-- Editar (Ajax Modal) --}}
+                                            {{-- Editar --}}
                                             <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal"
                                                 data-url="{{ route('cantones.edit', $canton->id) }}" title="Editar">
-                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                <i class="fa-solid fa-pen-to-square" style="font-size:.8rem;"></i>
                                             </button>
 
-                                            {{-- Eliminar (SweetAlert) --}}
+                                            {{-- Eliminar --}}
                                             <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                 data-url="{{ route('cantones.destroy', $canton) }}"
                                                 data-item="{{ $canton->nombre }}">
-                                                <i class="fa-solid fa-trash"></i>
+                                                <i class="fa-solid fa-trash" style="font-size:.8rem;"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -194,9 +182,7 @@
         {{-- MODAL DINÁMICO --}}
         <div class="modal fade" id="dynamicModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    {{-- Aquí se inyecta el contenido --}}
-                </div>
+                <div class="modal-content"></div>
             </div>
         </div>
 
@@ -209,15 +195,13 @@
                 // 1. Auto cerrar alertas
                 setTimeout(() => { document.querySelectorAll('.alert-temporal').forEach(alert => { alert.style.transition = "opacity 0.5s"; alert.style.opacity = 0; setTimeout(() => alert.remove(), 500); }); }, 3000);
 
-                // 2. Modal Dinámico (Fetch Ajax)
+                // 2. Modal Dinámico
                 const modalEl = document.getElementById('dynamicModal');
                 const modal = new bootstrap.Modal(modalEl);
                 document.querySelectorAll('.open-modal').forEach(btn => {
                     btn.addEventListener('click', function () {
-                        // Poner spinner
                         modalEl.querySelector('.modal-content').innerHTML = '<div class="p-5 text-center"><div class="spinner-border text-primary"></div></div>';
                         modal.show();
-                        // Fetch
                         fetch(this.getAttribute('data-url')).then(r => r.text()).then(h => { modalEl.querySelector('.modal-content').innerHTML = h; });
                     });
                 });
@@ -230,8 +214,8 @@
                             html: `¿Deseas eliminar el cantón <b>"${this.getAttribute('data-item')}"</b>?`,
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonColor: '#d33',       // Rojo
-                            cancelButtonColor: '#3085d6',     // Azul
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
                             confirmButtonText: 'Sí, eliminar',
                             cancelButtonText: 'Cancelar'
                         }).then((r) => {
@@ -245,7 +229,6 @@
                 });
             });
 
-            // 4. Select All Checkboxes
             function toggleSelectAll() { const c = document.getElementById('selectAll').checked; document.querySelectorAll('.check-item').forEach(x => x.checked = c); }
         </script>
     </main>

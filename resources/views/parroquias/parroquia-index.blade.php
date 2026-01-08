@@ -117,21 +117,21 @@
                                                 <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal" 
                                                         data-url="{{ route('parroquias.show', $p->id) }}" 
                                                         title="Ver">
-                                                    <i class="fa-solid fa-eye text-white"></i>
+                                                    <i class="fa-solid fa-eye text-white" style="font-size:.8rem;"></i>
                                                 </button>
 
                                                 {{-- Editar (Ajax Modal) --}}
                                                 <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal" 
                                                         data-url="{{ route('parroquias.edit', $p->id) }}"
                                                         title="Editar">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    <i class="fa-solid fa-pen-to-square" style="font-size:.8rem;"></i>
                                                 </button>
                                                 
                                                 {{-- Eliminar (SweetAlert) --}}
                                                 <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                         data-url="{{ route('parroquias.destroy', $p) }}"
                                                         data-item="{{ $p->nombre }}">
-                                                    <i class="fa-solid fa-trash"></i>
+                                                    <i class="fa-solid fa-trash" style="font-size:.8rem;"></i>
                                                 </button>
                                             </td>
                                         </tr>

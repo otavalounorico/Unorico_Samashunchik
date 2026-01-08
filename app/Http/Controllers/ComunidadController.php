@@ -15,30 +15,26 @@ class ComunidadController extends Controller
 {
     public function index(Request $request)
     {
-        // Usamos 'search' en lugar de 'q' para ser consistentes con la vista PDF
         $q = trim($request->get('search', '')); 
-        // Obtener el ID de la parroquia del filtro
         $parroquiaId = $request->get('parroquia_id'); 
 
         $query = Comunidad::with('parroquia.canton')->orderBy('nombre');
 
-        // Aplicar filtro por Parroquia si existe
         if (!empty($parroquiaId)) {
             $query->where('parroquia_id', $parroquiaId);
         }
 
-        // Aplicar filtro por nombre
         if ($q !== '') {
-            $query->where('nombre', 'ILIKE', "%{$q}%"); // o 'LIKE' en MySQL
+            $query->where(function($subquery) use ($q){
+                $subquery->where('nombre', 'ILIKE', "%{$q}%")
+                         ->orWhere('codigo_unico', 'ILIKE', "%{$q}%");
+            });
         }
 
-        // Obtener todas las parroquias para el dropdown de filtro
         $parroquias = Parroquia::orderBy('nombre')->get(['id', 'nombre']); 
         
-        // paginator
         $comunidades = $query->paginate(10)->withQueryString();
 
-        // Pasar parroquias a la vista
         return view('comunidades.comunidad-index', compact('comunidades', 'parroquias'));
     }
     
@@ -50,18 +46,36 @@ class ComunidadController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Validación básica (tipos de datos)
         $request->validate([
             'parroquia_id' => 'required|exists:parroquias,id',
-            // unicidad del nombre dentro de la parroquia
-            'nombre' => 'required|string|max:255|unique:comunidades,nombre,NULL,id,parroquia_id,' . $request->parroquia_id,
+            'nombre'       => 'required|string|max:255',
         ]);
 
+        // 2. VALIDACIÓN MANUAL DE DUPLICADOS (Para que salga alerta roja en el Index)
+        $existe = Comunidad::where('parroquia_id', $request->parroquia_id)
+                            ->where('nombre', $request->nombre)
+                            ->exists();
+
+        if ($existe) {
+            // Obtenemos el nombre de la parroquia para que el mensaje sea más claro
+            $nombreParroquia = Parroquia::find($request->parroquia_id)->nombre ?? 'seleccionada';
+            
+            return redirect()->route('comunidades.index')
+                ->with('error', "Error: La comunidad '{$request->nombre}' ya existe en la parroquia '{$nombreParroquia}'.");
+        }
+
         try {
-            Comunidad::create([
+            // 3. Crear (El modelo genera el código automáticamente)
+            $comunidad = Comunidad::create([
                 'parroquia_id' => $request->parroquia_id,
-                'nombre' => $request->nombre,
+                'nombre'       => $request->nombre,
             ]);
-            return redirect()->route('comunidades.index')->with('success', 'Comunidad creada correctamente.');
+
+            // 4. Mensaje con Código y Nombre
+            return redirect()->route('comunidades.index')
+                ->with('success', "Comunidad {$comunidad->codigo_unico} - {$comunidad->nombre} creada correctamente.");
+
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Error al crear: '.$e->getMessage());
         }
@@ -75,20 +89,56 @@ class ComunidadController extends Controller
 
     public function update(Request $request, Comunidad $comunidad)
     {
+        // 1. Validación básica
         $request->validate([
             'parroquia_id' => 'required|exists:parroquias,id',
-            // ignora el propio id y mantiene unicidad por parroquia_id
-            'nombre' => 'required|string|max:255|unique:comunidades,nombre,' . $comunidad->id . ',id,parroquia_id,' . $request->parroquia_id,
+            'nombre'       => 'required|string|max:255',
         ]);
+
+        // 2. VALIDACIÓN MANUAL AL ACTUALIZAR
+        // Buscamos si existe OTRA comunidad con el mismo nombre en la misma parroquia (excluyendo la actual)
+        $existe = Comunidad::where('parroquia_id', $request->parroquia_id)
+                            ->where('nombre', $request->nombre)
+                            ->where('id', '!=', $comunidad->id) // Ignorar la propia comunidad
+                            ->exists();
+
+        if ($existe) {
+            $nombreParroquia = Parroquia::find($request->parroquia_id)->nombre ?? 'seleccionada';
+
+            return redirect()->route('comunidades.index')
+                ->with('error', "Error: Ya existe otra comunidad llamada '{$request->nombre}' en la parroquia '{$nombreParroquia}'.");
+        }
 
         try {
             $comunidad->update([
                 'parroquia_id' => $request->parroquia_id,
-                'nombre' => $request->nombre,
+                'nombre'       => $request->nombre,
             ]);
-            return redirect()->route('comunidades.index')->with('success', 'Comunidad actualizada correctamente.');
+            
+            // 3. Mensaje con Código y Nombre
+            return redirect()->route('comunidades.index')
+                ->with('success', "Comunidad {$comunidad->codigo_unico} - {$comunidad->nombre} actualizada correctamente.");
+
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Error al actualizar: '.$e->getMessage());
+        }
+    }
+
+    public function destroy(Comunidad $comunidad)
+    {
+        try {
+            // 1. Guardar datos antes de borrar
+            $datos = "{$comunidad->codigo_unico} - {$comunidad->nombre}";
+
+            $comunidad->delete();
+
+            // 2. Mensaje con los datos guardados
+            return redirect()->route('comunidades.index')
+                ->with('success', "Comunidad {$datos} eliminada.");
+
+        } catch (\Exception $e) {
+            return redirect()->route('comunidades.index')
+                ->with('error', "No se pudo eliminar la comunidad {$comunidad->codigo_unico} - {$comunidad->nombre}. Detalle: " . $e->getMessage());
         }
     }
 
@@ -96,16 +146,6 @@ class ComunidadController extends Controller
     {
         $comunidad->load('parroquia.canton');
         return view('comunidades.comunidad-show', compact('comunidad'));
-    }
-
-    public function destroy(Comunidad $comunidad)
-    {
-        try {
-            $comunidad->delete();
-            return redirect()->route('comunidades.index')->with('success', 'Comunidad eliminada.');
-        } catch (\Exception $e) {
-            return redirect()->route('comunidades.index')->with('error', 'Error al eliminar: '.$e->getMessage());
-        }
     }
 
     // Para AJAX de combos (comunidades por parroquia)
@@ -116,30 +156,21 @@ class ComunidadController extends Controller
         );
     }
     
-   /**
-     * Genera reportes (Excel o PDF) de las comunidades seleccionadas.
-     * REQUISITO: Debe seleccionarse al menos un checkbox (ids[]).
-     */
     public function reports(Request $request)
     {
-        // 1. Obtener los IDs seleccionados (checkboxes)
         $ids = $request->input('ids', []);
         $reportType = $request->input('report_type');
 
-        // 🚨 VALIDACIÓN ESTRICTA: Si no hay IDs seleccionados, NO genera reporte.
-        // Esto imita exactamente la lógica de tu ParroquiaController.
         if (empty($ids)) {
             return redirect()->back()->with('error', 'Debe seleccionar al menos una comunidad para el reporte.');
         }
 
-        // 2. Obtener los datos basándose SOLO en los IDs seleccionados
         $comunidades = Comunidad::with('parroquia.canton')
                             ->whereIn('id', $ids)
                             ->orderBy('parroquia_id')
                             ->orderBy('nombre')
                             ->get();
 
-        // 3. Definir encabezados y mapear los datos
         $headings = [
             'ID',
             'Código Único', 
@@ -160,13 +191,10 @@ class ComunidadController extends Controller
             ];
         });
 
-        // 4. Procesar el tipo de reporte
         if ($reportType === 'excel') {
-            // Usamos ComunidadExport para Excel
             return Excel::download(new ComunidadExport($data, $headings), 'comunidades_reporte_'.date('YmdHis').'.xlsx');
             
         } elseif ($reportType === 'pdf') {
-            // Usamos la vista 'comunidades.reports_pdf' para PDF
             $pdf = Pdf::loadView('comunidades.reports_pdf', compact('data', 'headings')); 
             return $pdf->download('comunidades_reporte_'.date('YmdHis').'.pdf');
         }
