@@ -295,7 +295,7 @@
                 document.querySelectorAll('.js-delete-btn').forEach(btn => {
                     btn.addEventListener('click', function () {
                         Swal.fire({
-                            title: '¿Eliminar Socio?', html: `¿Deseas eliminar a <b>"${this.getAttribute('data-item')}"</b>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+                            title: '¿Eliminar Socio?', html: `¿Deseas eliminar al socio <b>"${this.getAttribute('data-item')}"</b>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
                         }).then((r) => { if (r.isConfirmed) { const f = document.getElementById('deleteForm'); f.action = this.getAttribute('data-url'); f.submit(); } });
                     });
                 });

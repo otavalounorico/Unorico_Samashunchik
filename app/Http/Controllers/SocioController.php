@@ -40,13 +40,13 @@ class SocioController extends Controller
         // Alerta de candidatos a exoneración
         $fechaLimite = \Carbon\Carbon::now()->subYears(75);
         $candidatos = Socio::where('fecha_nac', '<=', $fechaLimite)
-                           ->where('tipo_beneficio', '!=', 'exonerado')
-                           ->orderBy('apellidos')
-                           ->get();
+            ->where('tipo_beneficio', '!=', 'exonerado')
+            ->orderBy('apellidos')
+            ->get();
 
         return view('socios.socio-index', compact('socios', 'comunidades', 'candidatos'));
     }
-    
+
     public function create()
     {
         $comunidades = Comunidad::orderBy('nombre')->get(['id', 'nombre']);
@@ -58,6 +58,7 @@ class SocioController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Validaciones
         $request->validate([
             'cedula'            => 'required|string|max:20|unique:socios,cedula',
             'nombres'           => 'required|string|max:255',
@@ -66,22 +67,19 @@ class SocioController extends Controller
             'telefono'          => 'nullable|string|max:30',
             'direccion'         => 'nullable|string|max:255',
             'email'             => 'nullable|email|max:255',
-            
-            // CAMBIO: Ahora son required
             'comunidad_id'      => 'required|exists:comunidades,id',
             'estado_civil_id'   => 'required|exists:estados_civiles,id',
             'genero_id'         => 'nullable|exists:generos,id',
-
             'fecha_inscripcion' => 'required|date',
             'tipo_beneficio'    => 'required|in:sin_subsidio,con_subsidio,exonerado',
             'fecha_exoneracion' => 'nullable|date|required_if:tipo_beneficio,exonerado',
             'es_representante'  => 'boolean',
-
             'condicion'         => 'required|in:ninguna,discapacidad,enfermedad_terminal',
             'estatus'           => 'required|in:vivo,fallecido',
         ]);
 
         try {
+            // 2. Lógica de Negocio (Edad para exoneración)
             $edad = Carbon::parse($request->fecha_nac)->age;
 
             if ($request->tipo_beneficio === 'exonerado') {
@@ -93,19 +91,25 @@ class SocioController extends Controller
                 $request->merge(['fecha_exoneracion' => null]);
             }
 
-            $data = $request->all();
+            // 3. Preparar datos
+            $data = $request->except(['_token', '_method']);
             $data['created_by'] = auth()->id();
+            $data['es_representante'] = $request->has('es_representante') ? 1 : 0;
 
-            Socio::create($data);
+            // 4. Crear
+            $nuevoSocio = Socio::create($data);
 
+            // MENSAJE SOLICITADO: CODIGO Y NOMBRE
             return redirect()->route('socios.index')
-                ->with('success', 'Socio creado correctamente.');
+                ->with('success', "Socio creado correctamente: [{$nuevoSocio->codigo}] {$nuevoSocio->apellidos} {$nuevoSocio->nombres}");
 
         } catch (\Exception $e) {
+            \Log::error($e->getMessage());
             return back()->withInput()
                 ->with('error', 'Error al crear socio: ' . $e->getMessage());
         }
     }
+
     public function edit(Socio $socio)
     {
         $comunidades = Comunidad::orderBy('nombre')->get(['id', 'nombre']);
@@ -125,16 +129,13 @@ class SocioController extends Controller
             'telefono'          => 'nullable|string|max:30',
             'direccion'         => 'nullable|string|max:255',
             'email'             => 'nullable|email|max:255',
-
             'comunidad_id'      => 'required|exists:comunidades,id',
             'estado_civil_id'   => 'required|exists:estados_civiles,id',
             'genero_id'         => 'nullable|exists:generos,id',
-
             'fecha_inscripcion' => 'required|date',
             'tipo_beneficio'    => 'required|in:sin_subsidio,con_subsidio,exonerado',
             'fecha_exoneracion' => 'nullable|date|required_if:tipo_beneficio,exonerado',
             'es_representante'  => 'boolean',
-
             'condicion'         => 'required|in:ninguna,discapacidad,enfermedad_terminal',
             'estatus'           => 'required|in:vivo,fallecido',
         ]);
@@ -144,7 +145,7 @@ class SocioController extends Controller
 
             if ($request->tipo_beneficio === 'exonerado') {
                 if ($edad < 75) {
-                    return back()->withInput()->with('error', 
+                    return back()->withInput()->with('error',
                         "Acción denegada: El socio tiene $edad años. Solo mayores de 75 pueden ser Exonerados.");
                 }
             } else {
@@ -159,19 +160,28 @@ class SocioController extends Controller
 
             $socio->update($data);
 
+            // MENSAJE SOLICITADO: CODIGO Y NOMBRE
             return redirect()->route('socios.index')
-                ->with('success', 'Socio actualizado correctamente.');
+                ->with('success', "Socio actualizado correctamente: [{$socio->codigo}] {$socio->apellidos} {$socio->nombres}");
 
         } catch (\Exception $e) {
             return back()->withInput()
                 ->with('error', 'Error al actualizar: ' . $e->getMessage());
         }
     }
+
     public function destroy(Socio $socio)
     {
         try {
+            // Guardamos info antes de borrar
+            $infoSocio = "[{$socio->codigo}] {$socio->apellidos} {$socio->nombres}";
+            
             $socio->delete();
-            return redirect()->route('socios.index')->with('success', 'Socio eliminado.');
+            
+            // MENSAJE SOLICITADO: CODIGO Y NOMBRE
+            return redirect()->route('socios.index')
+                ->with('success', "Socio eliminado correctamente: {$infoSocio}");
+                
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
@@ -198,29 +208,52 @@ class SocioController extends Controller
             ->orderBy('nombres')
             ->get();
 
+        // 1. Encabezados (Incluye Dirección, Condición, Estatus)
         $headings = [
             'ID',
             'Código',
             'Cédula',
             'Apellidos y Nombres',
-            'Comunidad',
-            'Condición', // Nuevo
-            'Estatus',   // Nuevo
-            'Rep.',
-            'Fecha'
+            'Fecha Nac.',
+            'Ubicación',
+            'Dirección', // Campo solicitado
+            'Edad',
+            'Beneficio',
+            'Teléfono',
+            'Condición', // Campo nuevo
+            'Estatus'    // Campo nuevo
         ];
 
+        // 2. Mapeo de datos
         $data = $socios->map(function ($s) {
+            
+            $canton    = $s->comunidad?->parroquia?->canton?->nombre ?? 'Sin Cantón';
+            $parroquia = $s->comunidad?->parroquia?->nombre ?? 'Sin Parr.';
+            $comunidad = $s->comunidad?->nombre ?? 'Sin Com.';
+            $ubicacion = "$canton / $parroquia / $comunidad";
+
+            $condicion = ucfirst(str_replace('_', ' ', $s->condicion));
+            
+            $beneficio = match($s->tipo_beneficio) {
+                'sin_subsidio' => 'Sin Subsidio',
+                'con_subsidio' => 'Con Subsidio',
+                'exonerado'    => 'Exonerado',
+                default        => $s->tipo_beneficio,
+            };
+
             return [
-                'id' => $s->id,
-                'codigo' => $s->codigo,
-                'cedula' => $s->cedula,
-                'nombres_completos' => $s->apellidos . ' ' . $s->nombres,
-                'comunidad' => $s->comunidad?->nombre ?? 'N/A',
-                'condicion' => ucfirst(str_replace('_', ' ', $s->condicion)), // Formato bonito
-                'estatus' => ucfirst($s->estatus),
-                'representante' => $s->es_representante ? 'SÍ' : 'NO',
-                'fecha' => $s->created_at ? $s->created_at->format('d/m/Y') : '',
+                'id'        => $s->id,
+                'codigo'    => $s->codigo,
+                'cedula'    => $s->cedula,
+                'nombres'   => $s->apellidos . ' ' . $s->nombres,
+                'fecha_nac' => $s->fecha_nac ? $s->fecha_nac->format('d/m/Y') : '',
+                'ubicacion' => $ubicacion,
+                'direccion' => $s->direccion ?? '—',
+                'edad'      => $s->edad,
+                'beneficio' => $beneficio,
+                'telefono'  => $s->telefono,
+                'condicion' => $condicion,
+                'estatus'   => ucfirst($s->estatus),
             ];
         });
 

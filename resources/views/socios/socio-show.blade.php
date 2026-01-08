@@ -66,7 +66,9 @@
         <div class="col-6">
             <label class="d-block text-muted small mb-1">Estatus</label>
             @if($socio->estatus == 'vivo')
-                <span class="badge bg-success">VIVO</span>
+                <span class="badge rounded-pill" 
+                      style="background-color: #198754 !important; color: white !important; font-size: 0.85rem; padding: 0.5em 1em;">
+                    VIVO</span>
             @else
                 <span class="badge bg-dark">FALLECIDO</span>
             @endif
@@ -91,7 +93,9 @@
                     EXONERADO
                 </span>
             @elseif($socio->tipo_beneficio == 'con_subsidio')
-                <span class="badge bg-primary">CON SUBSIDIO</span>
+                <span class="badge rounded-pill" 
+                      style="background-color: #2062b9ff !important; color: white !important; font-size: 0.85rem; padding: 0.5em 1em;">
+                      CON SUBSIDIO</span>
             @else
                 <span class="badge bg-secondary text-dark">SIN SUBSIDIO</span>
             @endif
