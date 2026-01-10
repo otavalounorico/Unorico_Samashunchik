@@ -311,6 +311,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('recibos/{recibo}/edit', [App\Http\Controllers\PagoController::class, 'edit'])->name('pagos.edit');
     Route::put('recibos/{recibo}', [App\Http\Controllers\PagoController::class, 'update'])->name('pagos.update');
     Route::delete('recibos/{recibo}', [App\Http\Controllers\PagoController::class, 'destroy'])->name('pagos.destroy');
+    // Ruta para ver el historial de un socio específico antes de cobrar
+    Route::get('/pagos/historial/{socio}', [App\Http\Controllers\PagoController::class, 'historialSocio'])
+        ->name('pagos.historial_socio');
 });
 
 

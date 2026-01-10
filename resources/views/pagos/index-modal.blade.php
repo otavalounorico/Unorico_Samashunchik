@@ -7,7 +7,7 @@
 
 <div class="modal-body">
     
-    {{-- 1. RESUMEN DEL SOCIO (Estilo idéntico a tu vista 'Show') --}}
+    {{-- 1. RESUMEN DEL SOCIO --}}
     <div class="row mb-3">
         <div class="col-12 bg-light p-3 rounded border d-flex justify-content-between align-items-center shadow-sm">
             <div>
@@ -49,8 +49,9 @@
                                 @if(count($aniosPendientes) > 0)
                                     @foreach($aniosPendientes as $anio)
                                         <div class="form-check border-bottom pb-2 mb-2">
-                                            {{-- El valor enviado es el AÑO (Ej: 2023) --}}
+                                            {{-- Checkbox normal --}}
                                             <input class="form-check-input" type="checkbox" name="anios_pagados[]" value="{{ $anio }}" id="anio_{{ $anio }}" style="cursor: pointer; transform: scale(1.1);">
+                                            
                                             <label class="form-check-label fw-bold text-dark w-100 ps-1" for="anio_{{ $anio }}" style="cursor: pointer;">
                                                 Año {{ $anio }}
                                                 <span class="float-end badge bg-danger text-white" style="font-size: 0.65rem;">PENDIENTE</span>
@@ -63,14 +64,9 @@
                                         No tiene deudas pendientes.
                                     </div>
                                 @endif
+                                
+                                {{-- AQUÍ QUITAMOS EL BLOQUE DE ADELANTO QUE HABÍA ANTES --}}
 
-                                {{-- Opción Adelanto (Año siguiente) --}}
-                                <div class="form-check mt-2 pt-2 bg-light rounded px-2 border border-primary border-opacity-10">
-                                    <input class="form-check-input" type="checkbox" name="anios_pagados[]" value="{{ now()->year + 1 }}">
-                                    <label class="form-check-label text-primary fw-bold ps-1">
-                                        Año {{ now()->year + 1 }} (Adelanto)
-                                    </label>
-                                </div>
                             </div>
                         </div>
 
@@ -92,7 +88,7 @@
             </div>
         </div>
 
-        {{-- 3. COLUMNA DERECHA: HISTORIAL DE PAGOS --}}
+        {{-- 3. COLUMNA DERECHA: HISTORIAL DE PAGOS (Solo lectura) --}}
         <div class="col-md-7">
             <div class="card h-100 border shadow-sm">
                 <div class="card-header bg-white fw-bold text-secondary border-bottom py-2">
@@ -105,35 +101,22 @@
                                 <th class="text-secondary small text-uppercase">Año</th>
                                 <th class="text-secondary small text-uppercase">Monto</th>
                                 <th class="text-secondary small text-uppercase">Fecha</th>
-                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($socio->pagos as $pago)
                                 <tr>
-                                    {{-- Año Pagado (Verde si es reciente, oscuro normal) --}}
                                     <td>
                                         <span class="badge bg-success bg-opacity-10 text-success fw-bold border border-success border-opacity-25 px-2 py-1">
                                             {{ $pago->anio_pagado }}
                                         </span>
                                     </td>
-                                    
                                     <td class="fw-bold text-dark">${{ number_format($pago->monto, 2) }}</td>
-                                    
                                     <td class="text-muted small fw-bold">{{ $pago->fecha_pago->format('d/m/Y') }}</td>
-                                    
-                                    <td>
-                                        <form action="{{ route('pagos.destroy', $pago) }}" method="POST" onsubmit="return confirm('¿Está seguro de eliminar el pago del año {{ $pago->anio_pagado }}? Volverá a aparecer como deuda.');">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Eliminar registro">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-muted py-5 text-center">
+                                    <td colspan="3" class="text-muted py-5 text-center">
                                         <i class="fas fa-inbox fa-3x mb-3 text-secondary opacity-25"></i><br>
                                         <span class="small fw-bold">Sin historial de pagos registrados.</span>
                                     </td>
@@ -146,6 +129,7 @@
         </div>
     </div>
 </div>
+
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
 </div>

@@ -113,13 +113,14 @@
                                         <td>
                                             {{-- Botones de acción iguales al estilo anterior --}}
                                             <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal"
-                                                data-url="{{ route('pagos.show', $recibo->id) }}" title="Ver Detalle">
-                                                <i class="fas fa-eye"></i>
+                                                data-url="{{ route('pagos.historial_socio', $recibo->socio_id) }}" 
+                                                title="Ver Historial Completo de este Socio">
+                                                <i class="fas fa-eye text-white" style="font-size: 0.7rem;"></i>
                                             </button>
 
                                             <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal"
                                                 data-url="{{ route('pagos.edit', $recibo->id) }}" title="Corregir">
-                                                <i class="fas fa-pen"></i>
+                                                <i class="fas fa-pen" style="font-size: 0.7rem;"></i>
                                             </button>
 
                                             <form action="{{ route('pagos.destroy', $recibo->id) }}" method="POST"
@@ -127,7 +128,7 @@
                                                 onsubmit="return confirm('¿Eliminar este recibo completo?');">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger mb-0" title="Eliminar">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="fas fa-trash" style="font-size: 0.7rem;"></i>
                                                 </button>
                                             </form>
                                         </td>
