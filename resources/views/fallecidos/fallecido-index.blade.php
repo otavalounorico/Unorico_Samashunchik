@@ -151,16 +151,16 @@
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal" 
                                                         data-url="{{ route('fallecidos.show', $f) }}" title="Ver">
-                                                    <i class="fa fa-eye"></i>
+                                                    <i class="fa fa-eye"style="font-size: 0.7rem;"></i>
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal" 
                                                         data-url="{{ route('fallecidos.edit', $f) }}" title="Editar">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    <i class="fa-solid fa-pen-to-square"style="font-size: 0.7rem;"></i>
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                         data-url="{{ route('fallecidos.destroy', $f) }}"
                                                         data-item="{{ $f->apellidos }}" title="Eliminar">
-                                                    <i class="fa-solid fa-trash"></i>
+                                                    <i class="fa-solid fa-trash"style="font-size: 0.7rem;"></i>
                                                 </button>
                                             </td>
                                         </tr>

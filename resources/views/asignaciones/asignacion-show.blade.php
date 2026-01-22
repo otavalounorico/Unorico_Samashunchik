@@ -49,4 +49,16 @@
         </div>
     </div>
 </div>
-<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
+<div class="modal-footer justify-content-between">
+    @if(isset($nicho->bloque))
+        <a href="https://URL-DE-TU-COMPANERA.com/mapa?bloque={{ $nicho->bloque }}" 
+           target="_blank" 
+           class="btn btn-info text-white">
+            <i class="fas fa-map-marked-alt"></i> Ver Bloque en Mapa
+        </a>
+    @else
+        <button class="btn btn-secondary" disabled>Sin Ubicación</button>
+    @endif
+
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+</div>

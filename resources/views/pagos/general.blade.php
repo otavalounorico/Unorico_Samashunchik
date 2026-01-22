@@ -123,14 +123,14 @@
                                                 <i class="fas fa-pen" style="font-size: 0.7rem;"></i>
                                             </button>
 
-                                            <form action="{{ route('pagos.destroy', $recibo->id) }}" method="POST"
+                                            <!-- <form action="{{ route('pagos.destroy', $recibo->id) }}" method="POST"
                                                 class="d-inline"
                                                 onsubmit="return confirm('¿Eliminar este recibo completo?');">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger mb-0" title="Eliminar">
                                                     <i class="fas fa-trash" style="font-size: 0.7rem;"></i>
                                                 </button>
-                                            </form>
+                                            </form> -->
                                         </td>
                                     </tr>
                                 @empty
