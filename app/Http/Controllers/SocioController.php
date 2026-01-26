@@ -11,39 +11,66 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SociosExport;
 use Carbon\Carbon;
+use App\Models\Nicho;
 
 class SocioController extends Controller
 {
+/**
+     * Muestra la lista de socios con sus contadores de nichos.
+     */
     public function index(Request $request)
     {
-        $search = trim($request->get('search', ''));
-        $comunidadId = $request->get('comunidad_id');
+        // 1. Cargar comunidades para el filtro (dropdown)
+        $comunidades = Comunidad::orderBy('nombre', 'asc')->get();
 
-        $query = Socio::with(['comunidad.parroquia.canton', 'genero', 'estadoCivil'])
-            ->orderBy('apellidos')->orderBy('nombres');
-
-        if ($comunidadId)
-            $query->where('comunidad_id', $comunidadId);
-
-        if ($search !== '') {
-            $query->where(function ($w) use ($search) {
-                $w->where('cedula', 'ILIKE', "%{$search}%")
-                    ->orWhere('nombres', 'ILIKE', "%{$search}%")
-                    ->orWhere('apellidos', 'ILIKE', "%{$search}%")
-                    ->orWhere('codigo', 'ILIKE', "%{$search}%");
+        // 2. Lógica para la alerta de "Candidatos a Exoneración" (Mayores de 75 años no exonerados)
+        // Nota: Filtramos en colección para aprovechar el accessor 'edad' del modelo, 
+        // pero idealmente esto se debería hacer con whereRaw en SQL para optimizar si son muchos datos.
+        $candidatos = Socio::where('tipo_beneficio', '!=', 'exonerado')
+            ->whereNotNull('fecha_nac')
+            ->get()
+            ->filter(function ($s) {
+                return $s->edad >= 75;
             });
-        }
 
-        $socios = $query->paginate(10)->withQueryString();
-        $comunidades = Comunidad::orderBy('nombre')->get(['id', 'nombre']);
+        // 3. Consulta Principal de Socios
+        $socios = Socio::query()
+            ->with(['comunidad']) // Carga la relación de comunidad para no hacer N+1 queries
+            
+            // --- AQUÍ ESTÁ LA LÓGICA DE LOS NICHOS ---
+            ->withCount([
+                // Cuenta TOTAL de nichos asignados a este ID de socio
+                'nichos as total_nichos', 
+                
+                // Cuenta SOLO los que tienen tipo_nicho = 'PROPIO'
+                'nichos as propios_count' => function ($query) {
+                    $query->where('tipo_nicho', 'PROPIO');
+                },
+                
+                // Cuenta SOLO los que tienen tipo_nicho = 'COMPARTIDO'
+                'nichos as compartidos_count' => function ($query) {
+                    $query->where('tipo_nicho', 'COMPARTIDO');
+                }
+            ])
+            // -----------------------------------------
 
-        // Alerta de candidatos a exoneración
-        $fechaLimite = \Carbon\Carbon::now()->subYears(75);
-        $candidatos = Socio::where('fecha_nac', '<=', $fechaLimite)
-            ->where('tipo_beneficio', '!=', 'exonerado')
-            ->orderBy('apellidos')
-            ->get();
+            // Aplicar Scope de Búsqueda (definido en tu modelo Socio)
+            ->buscar($request->search)
 
+            // Aplicar Filtro de Comunidad si se seleccionó una
+            ->when($request->comunidad_id, function ($query, $id) {
+                return $query->where('comunidad_id', $id);
+            })
+
+            // Ordenamiento por defecto
+            ->orderBy('apellidos', 'asc')
+            ->orderBy('nombres', 'asc')
+
+            // Paginación (Mantiene los filtros en la URL al cambiar de página)
+            ->paginate(10)
+            ->withQueryString();
+
+        // 4. Retornar la vista con todas las variables necesarias
         return view('socios.socio-index', compact('socios', 'comunidades', 'candidatos'));
     }
 
@@ -187,12 +214,14 @@ class SocioController extends Controller
         }
     }
 
-    public function show(Socio $socio)
+public function show(Socio $socio)
     {
-        $socio->load(['comunidad.parroquia.canton', 'genero', 'estadoCivil']);
+        // Cargamos los nichos Y su bloque (ubicación) para mostrarlos en la tabla del modal.
+        // Esto evita que por cada nicho haga una consulta extra para buscar el bloque.
+        $socio->load(['nichos.bloque']);
+
         return view('socios.socio-show', compact('socio'));
     }
-
     public function reports(Request $request)
     {
         $ids = $request->input('ids', []);

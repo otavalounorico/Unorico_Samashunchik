@@ -1,4 +1,4 @@
-{{-- CABECERA DEL MODAL (Igual que Comunidad) --}}
+{{-- CABECERA DEL MODAL --}}
 <div class="modal-header bg-info text-white border-bottom-0 pb-0">
     <h5 class="modal-title fw-bold">Detalle del Socio</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -57,7 +57,6 @@
             <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">Estado y Beneficios</h6>
         </div>
 
-        {{-- CAMPOS NUEVOS EN SHOW --}}
         <div class="col-6">
             <label class="d-block text-muted small mb-1">Condición</label>
             <span class="fw-bold text-dark">{{ ucfirst(str_replace('_', ' ', $socio->condicion)) }}</span>
@@ -139,6 +138,87 @@
             <label class="d-block text-muted small mb-0">Email</label>
             <div class="text-dark">{{ $socio->email ?? '—' }}</div>
         </div>
+
+        {{-- ========================================== --}}
+        {{-- NUEVA SECCIÓN: NICHOS ASIGNADOS --}}
+        {{-- ========================================== --}}
+        <div class="col-12 mt-4">
+            <h6 class="text-primary fw-bold text-xs text-uppercase border-bottom pb-1 mb-2">
+                <i class="fas fa-monument me-1"></i> Nichos a su cargo
+            </h6>
+        </div>
+
+        <div class="col-12">
+            @if($socio->nichos->isEmpty())
+                <div class="alert alert-light text-center border text-muted small p-2">
+                    No tiene nichos registrados a su nombre.
+                </div>
+            @else
+                <div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped mb-0 text-xs align-middle">
+                        <thead class="bg-light text-secondary">
+                            <tr>
+                                <th class="ps-3">Código</th>
+                                <th class="text-center">Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($socio->nichos as $nicho)
+                                <tr>
+                                    {{-- 1. CÓDIGO --}}
+                                    <td class="ps-3 fw-bold text-dark">{{ $nicho->codigo }}</td>
+
+                                    {{-- 2. TIPO (Directo de la BD: PROPIO o COMPARTIDO) --}}
+                                    <td class="text-center">
+                                        @if($nicho->tipo_nicho === 'PROPIO')
+                                            <span class="badge bg-warning text-dark border border-warning" title="Uso exclusivo">
+                                                PROPIO
+                                            </span>
+                                        @elseif($nicho->tipo_nicho === 'COMPARTIDO')
+                                            <span class="badge bg-info text-dark border border-info" title="Uso familiar/compartido">
+                                                COMPARTIDO
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $nicho->tipo_nicho }}</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- 3. UBICACIÓN --}}
+                                    <td>
+                                        @if($nicho->bloque)
+                                            Bloque {{ $nicho->bloque->codigo }}
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- 4. DESCRIPCIÓN --}}
+                                    <td>
+                                        <span class="d-inline-block text-truncate" style="max-width: 180px;" title="{{ $nicho->descripcion }}">
+                                            {{ $nicho->descripcion ?? 'Sin descripción' }}
+                                        </span>
+                                    </td>
+
+                                    {{-- 5. ESTADO --}}
+                                    <td class="text-center">
+                                        @if($nicho->disponible)
+                                            <i class="fas fa-check-circle text-success" title="Disponible"></i>
+                                        @else
+                                            <i class="fas fa-times-circle text-danger" title="Ocupado"></i>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+        {{-- ========================================== --}}
+
 
         {{-- AUDITORÍA (Footer interno) --}}
         <div class="col-12 mt-3 pt-2 border-top d-flex justify-content-between text-xs text-muted">

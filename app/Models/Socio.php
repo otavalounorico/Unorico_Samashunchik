@@ -40,33 +40,46 @@ class Socio extends Model
         return $this->fecha_inscripcion ? $this->fecha_inscripcion->age : 0;
     }
 
-    public function comunidad()     { return $this->belongsTo(Comunidad::class); }
-    public function genero()        { return $this->belongsTo(Genero::class); }
-    public function estadoCivil()   { return $this->belongsTo(EstadoCivil::class, 'estado_civil_id'); }
-    public function creador()       { return $this->belongsTo(User::class, 'created_by'); }
-
-    public function nichos()
+    public function comunidad()
     {
-        return $this->belongsToMany(Nicho::class, 'socio_nicho')
-                    ->using(SocioNicho::class)
-                    ->withPivot('rol', 'desde', 'hasta')
-                    ->withTimestamps();
+        return $this->belongsTo(Comunidad::class);
     }
-    
+    public function genero()
+    {
+        return $this->belongsTo(Genero::class);
+    }
+    public function estadoCivil()
+    {
+        return $this->belongsTo(EstadoCivil::class, 'estado_civil_id');
+    }
+    public function creador()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // public function nichos()
+    // {
+    //     return $this->belongsToMany(Nicho::class, 'socio_nicho')
+    //         ->using(SocioNicho::class)
+    //         ->withPivot('rol', 'desde', 'hasta')
+    //         ->withTimestamps();
+    // }
+
     public function getNombreCompletoAttribute(): string
     {
-        return trim(($this->apellidos ?? '').' '.($this->nombres ?? ''));
+        return trim(($this->apellidos ?? '') . ' ' . ($this->nombres ?? ''));
     }
-    
+
     public function scopeBuscar($q, ?string $term)
     {
-        $term = trim((string)$term);
-        if ($term === '') return $q;
+        $term = trim((string) $term);
+        if ($term === '')
+            return $q;
         return $q->where(function ($qq) use ($term) {
             $qq->where('cedula', 'ILIKE', "%{$term}%")
-               ->orWhere('nombres', 'ILIKE', "%{$term}%")
-               ->orWhere('apellidos', 'ILIKE', "%{$term}%")
-               ->orWhere('codigo', 'ILIKE', "%{$term}%");
+                ->orWhere('nombres', 'ILIKE', "%{$term}%")
+                ->orWhere('apellidos', 'ILIKE', "%{$term}%")
+                ->orWhere('codigo', 'ILIKE', "%{$term}%");
         });
     }
 
@@ -77,14 +90,21 @@ class Socio extends Model
 
     public function getAniosDeudaAttribute()
     {
-        if (!$this->fecha_inscripcion) return [];
+        if (!$this->fecha_inscripcion)
+            return [];
 
         $anioInicio = $this->fecha_inscripcion->year;
         $anioActual = now()->year;
-        
+
         $aniosDebidos = range($anioInicio, $anioActual);
         $aniosPagados = $this->pagos->pluck('anio_pagado')->toArray();
 
         return array_values(array_diff($aniosDebidos, $aniosPagados));
+    }
+
+    public function nichos()
+    {
+        // Relación directa: Un socio tiene muchos nichos asociados a su ID
+        return $this->hasMany(Nicho::class, 'socio_id');
     }
 }

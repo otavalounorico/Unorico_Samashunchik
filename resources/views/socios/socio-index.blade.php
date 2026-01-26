@@ -81,7 +81,7 @@
                 </div>
             @endif
 
-            {{-- 4. ALERTA DE "CANDIDATOS A EXONERACIÓN" (La notificación arriba) --}}
+            {{-- 4. ALERTA DE "CANDIDATOS A EXONERACIÓN" --}}
             @if(isset($candidatos) && $candidatos->isNotEmpty())
                 <div class="alert alert-warning text-dark border-warning mb-4 shadow-sm" style="background-color: #fff3cd;">
                     <div class="d-flex align-items-start">
@@ -166,6 +166,12 @@
                                         <th>Nombre Completo</th>
                                         <th>Comunidad</th>
                                         <th>Edad</th>
+                                        
+                                        {{-- ============================== --}}
+                                        {{-- NUEVA COLUMNA DE NICHOS --}}
+                                        <th class="text-center" style="width: 140px;">Nichos</th> 
+                                        {{-- ============================== --}}
+                                        
                                         <th style="width: 130px;">Estado</th>
                                         <th style="width:140px;">Acciones</th>
                                     </tr>
@@ -185,24 +191,51 @@
                                             </td>
                                             <td>{{ $s->edad }} años</td>
 
-                                            {{-- CAMBIO: ETIQUETAS SIMPLES Y LIMPIAS --}}
+                                            {{-- ============================== --}}
+                                            {{-- LÓGICA DE CONTADORES DE NICHOS --}}
+                                            {{-- ============================== --}}
+                                            <td class="text-center align-middle">
+                                                @if($s->total_nichos > 0)
+                                                    <div class="d-flex flex-column gap-1 align-items-center">
+                                                        
+                                                        {{-- CONTADOR DE PROPIOS (AMARILLO) --}}
+                                                        @if($s->propios_count > 0)
+                                                            <span class="badge border text-dark bg-light w-100" style="font-weight: 600; font-size: 0.75rem;">
+                                                                <i class="fas fa-crown text-warning me-1"></i> 
+                                                                {{ $s->propios_count }} {{ Str::plural('Propio', $s->propios_count) }}
+                                                            </span>
+                                                        @endif
+                                            
+                                                        {{-- CONTADOR DE COMPARTIDOS (AZUL) --}}
+                                                        @if($s->compartidos_count > 0)
+                                                            <span class="badge border text-dark bg-white w-100" style="font-weight: 600; font-size: 0.75rem;">
+                                                                <i class="fas fa-users text-info me-1"></i> 
+                                                                {{ $s->compartidos_count }} {{ Str::plural('Comp.', $s->compartidos_count) }}
+                                                            </span>
+                                                        @endif
+                                            
+                                                    </div>
+                                                @else
+                                                    {{-- SI NO TIENE NINGUNO --}}
+                                                    <span class="text-muted small" style="font-size: 0.8rem;">—</span>
+                                                @endif
+                                            </td>
+                                            {{-- ============================== --}}
+
                                             <td style="vertical-align: middle;">
                                                 @if($s->tipo_beneficio === 'exonerado')
-                                                    {{-- VERDE OSCURO SOLIDO --}}
                                                     <span class="badge rounded-pill fw-bold px-3 py-2"
                                                         style="background-color: #198754; color: white; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                                         EXONERADO
                                                     </span>
 
                                                 @elseif($s->tipo_beneficio === 'con_subsidio')
-                                                    {{-- AZUL FUERTE SOLIDO --}}
                                                     <span class="badge rounded-pill fw-bold px-3 py-2"
                                                         style="background-color: #0d6efd; color: white; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                                         CON SUBSIDIO
                                                     </span>
 
                                                 @else
-                                                    {{-- GRIS OSCURO SOLIDO --}}
                                                     <span class="badge rounded-pill fw-bold px-3 py-2"
                                                         style="background-color: #495057; color: white; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                                         SIN SUBSIDIO
@@ -224,7 +257,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="text-center py-4 text-muted">No se encontraron socios.
+                                            <td colspan="10" class="text-center py-4 text-muted">No se encontraron socios.
                                             </td>
                                         </tr>
                                     @endforelse
