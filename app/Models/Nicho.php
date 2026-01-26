@@ -46,6 +46,11 @@ class Nicho extends Model
         return $this->belongsTo(User::class, 'created_by'); 
     }
 
+    public function socio()
+    {
+        return $this->belongsTo(Socio::class, 'socio_id');
+    }
+
 // Relación con Socios (Usando el modelo Pivot corregido)
     public function socios()
     {
@@ -63,4 +68,6 @@ class Nicho extends Model
                     ->withPivot('posicion', 'fecha_inhumacion', 'fecha_exhumacion', 'observacion')
                     ->withTimestamps();
     }
+
+    
 }

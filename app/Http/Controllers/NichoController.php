@@ -6,67 +6,78 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Nicho;
 use App\Models\Bloque;
+use App\Models\Socio;
 
 // Librerías Reportes
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\NichosExport;
-use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Http;
 
 class NichoController extends Controller
 {
     public function index(Request $request)
     {
-        $q = trim($request->get('q',''));
+        $q = trim($request->get('q', ''));
         $bloqueId = $request->get('bloque_id');
 
         // Ordenar por código (N0001, N0002...)
         $query = Nicho::with('bloque')->orderBy('codigo', 'asc');
 
         if ($q !== '') {
-            $query->where('codigo','ILIKE',"%{$q}%");
+            $query->where('codigo', 'ILIKE', "%{$q}%");
         }
         if ($bloqueId) {
-            $query->where('bloque_id',$bloqueId);
+            $query->where('bloque_id', $bloqueId);
         }
 
-        $nichos  = $query->paginate(10)->withQueryString();
+        $nichos = $query->paginate(10)->withQueryString();
         $bloques = Bloque::orderBy('nombre')->get();
 
-        return view('nichos.nicho-index', compact('nichos','bloques','bloqueId','q'));
+        return view('nichos.nicho-index', compact('nichos', 'bloques', 'bloqueId', 'q'));
     }
 
-    public function create()
+public function create()
     {
-        // Solo necesitamos los bloques para el select
+        // 1. Traemos los bloques
         $bloques = Bloque::orderBy('nombre')->get();
-        return view('nichos.nicho-create', compact('bloques'));
+        
+        // 2. TRAEMOS LOS SOCIOS (Ahora sí, conectando a la BD)
+        // Usamos orden por 'id' descendente (los más nuevos primero).
+        // Esto es seguro y no fallará por nombres de columnas.
+        $socios = Socio::orderBy('id', 'desc')->get(); 
+
+        return view('nichos.nicho-create', compact('bloques', 'socios'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'bloque_id' => 'required|exists:bloques,id',
-            // 'codigo' se genera automático en el Model
+            'socio_id' => 'nullable|exists:socios,id', // Validar Socio
+            'tipo_nicho' => 'required|in:PROPIO,COMPARTIDO',
             'capacidad' => 'required|integer|min:1',
-            'estado'    => 'required|in:disponible,ocupado,mantenimiento',
-            'qr_uuid'   => 'nullable|string|unique:nichos,qr_uuid',
+            'estado' => 'required|in:disponible,ocupado,mantenimiento',
+            'descripcion' => 'nullable|string|max:1000',
+            'qr_uuid' => 'nullable|string|unique:nichos,qr_uuid',
         ]);
 
         try {
             Nicho::create([
-                'bloque_id'  => $request->bloque_id,
-                // El modelo genera el código (N0001...)
-                'capacidad'  => $request->capacidad,
-                'estado'     => $request->estado,
+                'bloque_id' => $request->bloque_id,
+                'socio_id' => $request->socio_id, // Guardar Socio
+                'tipo_nicho' => $request->tipo_nicho,
+                'capacidad' => $request->capacidad,
+                'estado' => $request->estado,
+                'descripcion' => $request->descripcion,
                 'disponible' => $request->estado === 'disponible',
-                'qr_uuid'    => $request->qr_uuid,
+                'qr_uuid' => $request->qr_uuid,
                 'created_by' => auth()->id(),
             ]);
 
-            return redirect()->route('nichos.index')->with('success','Nicho creado correctamente.');
+            return redirect()->route('nichos.index')->with('success', 'Nicho creado correctamente.');
         } catch (\Throwable $e) {
-            return back()->withInput()->with('error','Error: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -79,43 +90,48 @@ class NichoController extends Controller
     public function edit(Nicho $nicho)
     {
         $bloques = Bloque::orderBy('nombre')->get();
-        return view('nichos.nicho-edit', compact('nicho','bloques'));
+        $socios = Socio::orderBy('apellidos')->get(); // Cargamos socios
+        return view('nichos.nicho-edit', compact('nicho', 'bloques', 'socios'));
     }
 
     public function update(Request $request, Nicho $nicho)
     {
         $request->validate([
             'bloque_id' => 'required|exists:bloques,id',
-            // Validamos unicidad ignorando el ID actual
-            'codigo'    => ['required', 'string', 'max:50', Rule::unique('nichos')->ignore($nicho->id)],
+            'socio_id' => 'nullable|exists:socios,id', // Validar Socio
+            'codigo' => ['required', 'string', 'max:50', Rule::unique('nichos')->ignore($nicho->id)],
+            'tipo_nicho' => 'required|in:PROPIO,COMPARTIDO',
             'capacidad' => 'required|integer|min:1',
-            'estado'    => 'required|in:disponible,ocupado,mantenimiento',
-            'qr_uuid'   => ['nullable', 'string', Rule::unique('nichos')->ignore($nicho->id)],
+            'estado' => 'required|in:disponible,ocupado,mantenimiento',
+            'descripcion' => 'nullable|string|max:1000',
+            'qr_uuid' => ['nullable', 'string', Rule::unique('nichos')->ignore($nicho->id)],
         ]);
 
         try {
             $nicho->update([
-                'bloque_id'  => $request->bloque_id,
-                'codigo'     => $request->codigo,
-                'capacidad'  => $request->capacidad,
-                'estado'     => $request->estado,
+                'bloque_id' => $request->bloque_id,
+                'socio_id' => $request->socio_id, // Actualizar Socio
+                'codigo' => $request->codigo,
+                'tipo_nicho' => $request->tipo_nicho,
+                'capacidad' => $request->capacidad,
+                'estado' => $request->estado,
+                'descripcion' => $request->descripcion,
                 'disponible' => $request->estado === 'disponible',
-                'qr_uuid'    => $request->qr_uuid,
+                'qr_uuid' => $request->qr_uuid,
             ]);
 
-            return redirect()->route('nichos.index')->with('success','Nicho actualizado.');
+            return redirect()->route('nichos.index')->with('success', 'Nicho actualizado.');
         } catch (\Throwable $e) {
-            return back()->withInput()->with('error','Error: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
-
     public function destroy(Nicho $nicho)
     {
         try {
             $nicho->delete();
-            return redirect()->route('nichos.index')->with('success','Nicho eliminado.');
+            return redirect()->route('nichos.index')->with('success', 'Nicho eliminado.');
         } catch (\Throwable $e) {
-            return redirect()->route('nichos.index')->with('error','Error: '.$e->getMessage());
+            return redirect()->route('nichos.index')->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -148,38 +164,38 @@ class NichoController extends Controller
         // Mapeo de datos
         $data = $nichos->map(function ($n) {
             return [
-                'id'             => $n->id,
-                'codigo'         => $n->codigo,
-                'bloque'         => $n->bloque->nombre ?? 'N/A',
-                'estado'         => ucfirst($n->estado),
+                'id' => $n->id,
+                'codigo' => $n->codigo,
+                'bloque' => $n->bloque->nombre ?? 'N/A',
+                'estado' => ucfirst($n->estado),
                 'disponibilidad' => $n->disponible ? 'Sí' : 'No',
-                'capacidad'      => $n->capacidad,
+                'capacidad' => $n->capacidad,
             ];
         });
 
         if ($reportType === 'excel') {
             return Excel::download(new NichosExport($data, $headings), 'nichos_reporte.xlsx');
-            
+
         } elseif ($reportType === 'pdf') {
             $pdf = Pdf::loadView('nichos.reports-pdf', compact('data', 'headings'));
-            $pdf->setPaper('A4', 'portrait'); 
+            $pdf->setPaper('A4', 'portrait');
             return $pdf->download('nichos_reporte_' . date('YmdHis') . '.pdf');
         }
 
         return redirect()->back();
     }
-// Agrega esto en tu controlador
+    // Agrega esto en tu controlador
 
-// ─── 1. VISTA DE PREVISUALIZACIÓN (Ticket) ───
+    // ─── 1. VISTA DE PREVISUALIZACIÓN (Ticket) ───
     public function downloadQr(Request $request, Nicho $nicho)
     {
-        $mode = $request->get('mode', 'text'); 
+        $mode = $request->get('mode', 'text');
 
         // Cargamos relaciones
         $nicho->load(['bloque', 'fallecidos', 'socios']);
 
         $textoQR = "";
-        $titulo  = "";
+        $titulo = "";
 
         if ($mode === 'url') {
             // ---------------------------------------------------------
@@ -189,20 +205,20 @@ class NichoController extends Controller
             // $textoQR = route('public.nicho.info', ['uuid' => $nicho->qr_uuid]);
 
             // POR AHORA: Usamos un link genérico para que no de error
-            $textoQR = url('/ver-nicho/' . $nicho->qr_uuid); 
-            
-            $titulo  = "QR WEB (FUTURO - EN CONSTRUCCIÓN)";
+            $textoQR = url('/ver-nicho/' . $nicho->qr_uuid);
+
+            $titulo = "QR WEB (FUTURO - EN CONSTRUCCIÓN)";
 
         } else {
             // ---------------------------------------------------------
             // OPCIÓN PRESENTE (OFFLINE / TEXTO)
             // ---------------------------------------------------------
-            $textoQR  = "NICHO: " . $nicho->codigo . "\n";
+            $textoQR = "NICHO: " . $nicho->codigo . "\n";
             $textoQR .= "BLOQUE: " . ($nicho->bloque->nombre ?? 'S/N') . "\n";
-            
+
             if ($nicho->fallecidos->isNotEmpty()) {
                 $textoQR .= "\n--- OCUPANTES ---\n";
-                foreach($nicho->fallecidos as $f) {
+                foreach ($nicho->fallecidos as $f) {
                     $textoQR .= "- " . $f->apellidos . " " . $f->nombres . "\n";
                 }
             } else {
@@ -230,13 +246,13 @@ class NichoController extends Controller
     {
         // 1. Reconstruimos el texto (Usamos la lógica OFFLINE por defecto para la descarga directa)
         $nicho->load(['bloque', 'fallecidos', 'socios']);
-        
-        $texto  = "NICHO: " . $nicho->codigo . "\n";
+
+        $texto = "NICHO: " . $nicho->codigo . "\n";
         $texto .= "BLOQUE: " . ($nicho->bloque->nombre ?? 'S/N') . "\n";
-        
+
         if ($nicho->fallecidos->isNotEmpty()) {
             $texto .= "\n--- OCUPANTES ---\n";
-            foreach($nicho->fallecidos as $f) {
+            foreach ($nicho->fallecidos as $f) {
                 $texto .= $f->apellidos . " " . $f->nombres . "\n";
             }
         } else {
@@ -251,7 +267,7 @@ class NichoController extends Controller
 
         // 2. Pedimos la imagen a la API (Tamaño 500x500 para mejor calidad)
         $apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=" . urlencode($texto);
-        
+
         // 3. Obtenemos el contenido del archivo
         $imageContent = Http::get($apiUrl)->body();
 

@@ -99,6 +99,8 @@
                                         <th style="width: 50px;">#</th>
                                         <th>Código</th>
                                         <th>Bloque</th>
+                                        {{-- NUEVA COLUMNA: TIPO --}}
+                                        <th>Tipo</th>
                                         <th>Capacidad</th>
                                         <th>Estado</th>
                                         <th>Disp.</th>
@@ -115,6 +117,16 @@
                                                 <span class="d-block text-sm fw-bold">{{ $n->bloque?->codigo }}</span>
                                                 <small class="text-muted" style="font-size: 10px;">{{ Str::limit($n->bloque?->nombre, 15) }}</small>
                                             </td>
+
+                                            {{-- MOSTRAR EL TIPO DE NICHO --}}
+                                            <td>
+                                                @if($n->tipo_nicho === 'PROPIO')
+                                                    <span class="badge bg-gradient-info" style="font-size: 0.7rem; letter-spacing: 0.5px;">PROPIO</span>
+                                                @else
+                                                    <span class="badge bg-gradient-primary" style="font-size: 0.7rem; letter-spacing: 0.5px;">COMPARTIDO</span>
+                                                @endif
+                                            </td>
+
                                             <td>{{ $n->capacidad }}</td>
                                             <td>
                                                 @switch($n->estado)
@@ -134,22 +146,11 @@
                                                         <i class="fas fa-qrcode"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
-                                                        
-                                                        {{-- 1. Opción OFFLINE / LOCAL (Activa) --}}
                                                         <li>
                                                             <a class="dropdown-item" href="{{ route('nichos.qr', ['nicho' => $n->id, 'mode' => 'text']) }}" target="_blank">
                                                                 <i class="fas fa-file-alt me-2 text-secondary"></i> QR Texto (Offline)
                                                             </a>
                                                         </li>
-
-                                                        {{-- 2. Opción ONLINE / WEB (Comentada para el futuro) --}}
-                                                        {{-- 
-                                                        <li>
-                                                            <a class="dropdown-item" href="{{ route('nichos.qr', ['nicho' => $n->id, 'mode' => 'url']) }}" target="_blank">
-                                                                <i class="fas fa-globe me-2 text-primary"></i> QR Web (Futuro)
-                                                            </a>
-                                                        </li>
-                                                        --}}
                                                     </ul>
                                                 </div>
                                                 
@@ -164,7 +165,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="8" class="text-center py-4 text-muted">No se encontraron nichos.</td></tr>
+                                        <tr><td colspan="9" class="text-center py-4 text-muted">No se encontraron nichos.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
