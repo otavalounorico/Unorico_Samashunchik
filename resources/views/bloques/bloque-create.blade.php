@@ -13,10 +13,10 @@
         
         {{-- Mensaje informativo --}}
         <div class="alert alert-info py-2 mb-3 text-xs">
-            <i class="fas fa-info-circle me-1"></i> El Código (Ej: B0001) se genera automáticamente.
+            <i class="fas fa-info-circle me-1"></i> 
+            Si seleccionas un <b>Código GIS</b>, este se asignará automáticamente al bloque.
         </div>
 
-        {{-- Mostrar errores --}}
         @if ($errors->any())
             <div class="alert alert-danger py-2 text-xs">
                 <ul class="mb-0 ps-3">
@@ -36,20 +36,21 @@
                 <input type="number" step="0.01" min="0" name="area_m2" value="{{ old('area_m2') }}" class="form-control" placeholder="0.00">
             </div>
 
-            {{-- Fila 2: Geometría --}}
+            {{-- Fila 2: Geometría (AQUÍ ESTÁ EL CAMBIO) --}}
             <div class="col-12">
-                <label class="form-label fw-bold">Geometría (QGIS)</label>
+                <label class="form-label fw-bold text-primary">Código GIS y Sector (Mapa)</label>
                 <select id="bloque_geom_id" name="bloque_geom_id" class="form-select">
-                    <option value="">-- Seleccionar Polígono --</option>
+                    <option value="">-- Seleccionar Código del Mapa --</option>
                     @isset($bloquesGeom)
                         @foreach($bloquesGeom as $bg)
+                            {{-- Muestra: B-01 | Sector Norte --}}
                             <option value="{{ $bg->id }}" @selected(old('bloque_geom_id') == $bg->id)>
-                                {{ $bg->id }} - {{ $bg->nombre }}
+                                {{ $bg->codigo }} | {{ $bg->sector ?? 'General' }}
                             </option>
                         @endforeach
                     @endisset
                 </select>
-                <small class="text-muted text-xs">Se asignará automáticamente la geometría seleccionada.</small>
+                <small class="text-muted text-xs">El código seleccionado (ej. B-20) será el código del nuevo bloque.</small>
             </div>
 
             {{-- Fila 3: Descripción --}}
@@ -66,6 +67,6 @@
     {{-- PIE DEL MODAL --}}
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
+        <button type="submit" class="btn btn-success">Guardar Bloque</button>
     </div>
 </form>

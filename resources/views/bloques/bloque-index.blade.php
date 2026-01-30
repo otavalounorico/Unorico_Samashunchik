@@ -132,10 +132,14 @@
                                                 @endif
                                             </td>
                                             
-                                            <td class="fw-bold text-secondary">{{ $b->id }}</td>
+                                            {{-- CORRECCIÓN AQUÍ: CONTADOR SECUENCIAL --}}
+                                            <td class="fw-bold text-secondary">
+                                                {{ $bloques->firstItem() + $loop->index }}
+                                            </td>
+
                                             <td class="fw-bold text-dark">{{ $b->codigo }}</td>
                                             <td class="text-start ps-4">{{ $b->nombre }}</td>
-                                            <td>{{ $b->area_m2 ?? '-' }}</td>
+                                            <td>{{ $b->area_m2 ? number_format($b->area_m2, 2) : '-' }}</td>
                                             
                                             <td>
                                                 @if($b->bloqueGeom || $b->geom)
