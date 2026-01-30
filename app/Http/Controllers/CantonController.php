@@ -4,80 +4,95 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Canton;
+use Illuminate\Support\Facades\DB; // <--- IMPORTANTE: Faltaba esto para que funcione la búsqueda
 
 class CantonController extends Controller
 {
+
     public function index(Request $request)
     {
         $q = trim($request->get('q', ''));
 
-        // 1. Ordenar por el código generado (CA001, CA002...)
+        // 1. Iniciar consulta ordenada por código
         $query = Canton::orderBy('codigo', 'asc');
 
+        // 2. Búsqueda inteligente (Nombre o Código)
         if ($q !== '') {
-            // 2. Búsqueda avanzada: busca por nombre O por código
             $query->where(function ($sub) use ($q) {
-                // Detectar si es Postgres o MySQL para el operador (ILIKE vs LIKE)
-                $operator = \DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+                // Detectar base de datos para usar ILIKE (Postgres) o LIKE (MySQL)
+                $operator = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
 
                 $sub->where('nombre', $operator, "%{$q}%")
                     ->orWhere('codigo', $operator, "%{$q}%");
             });
         }
 
+        // 3. Paginación manteniendo los filtros
         $cantones = $query->paginate(10)->withQueryString();
 
         return view('cantones.canton-index', compact('cantones'));
     }
 
-// --- CORREGIDO: CREATE ---
     public function create()
     {
-        // Detectamos si es AJAX para decirle a la vista que es un Modal
         $isModal = request()->ajax();
-        
-        // Retornamos la vista (asegúrate que el archivo sea 'create.blade.php' en la carpeta 'cantones')
+        // Asegúrate de que el archivo exista en resources/views/cantones/canton-create.blade.php
         return view('cantones.canton-create', compact('isModal'));
     }
 
-    // --- CORREGIDO: EDIT ---
-    public function edit(Canton $canton)
-    {
-        // Detectamos si es AJAX
-        $isModal = request()->ajax();
-
-        // Retornamos la vista con los datos del cantón
-        return view('cantones.canton-edit', compact('canton', 'isModal'));
-    }
     public function store(Request $request)
     {
+        // 1. Validaciones
         $request->validate([
             'nombre' => 'required|string|max:255|unique:cantones,nombre',
         ], [
-            'nombre.unique' => 'El nombre del cantón ya existe.',
-            'nombre.required' => 'El nombre es obligatorio.'
+            'nombre.required' => 'El nombre del cantón es obligatorio.',
+            'nombre.unique'   => 'Este nombre de cantón ya está registrado.',
+            'nombre.max'      => 'El nombre no puede superar los 255 caracteres.'
         ]);
 
         try {
+            // 2. Crear
             Canton::create([
-                'nombre' => $request->nombre,
-                // El código se genera automáticamente en el Modelo (boot)
+                'nombre' => strtoupper($request->nombre), // Guardamos en mayúsculas por estándar
             ]);
-            return redirect()->route('cantones.index')->with('success', 'Cantón creado correctamente.');
+
+            return redirect()->route('cantones.index')
+                ->with('success', 'Cantón creado correctamente.');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al crear: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput() // Devuelve lo que el usuario escribió
+                ->with('error', 'Error al crear: ' . $e->getMessage());
         }
     }
 
-    public function update(Request $request, Canton $canton)
+// --- EDITAR (SOLUCIÓN AL ERROR 500) ---
+    public function edit($id) // Cambiamos (Canton $canton) por ($id)
     {
+        // Buscamos manualmente. Si no existe, da error 404 (controlado) en vez de 500.
+        $canton = Canton::findOrFail($id); 
+        
+        $isModal = request()->ajax();
+        return view('cantones.canton-edit', compact('canton', 'isModal'));
+    }
+
+    // --- ACTUALIZAR ---
+    public function update(Request $request, $id) // Cambiamos por $id
+    {
+        $canton = Canton::findOrFail($id); // Buscamos el registro
+
         $request->validate([
+            // Ignoramos el ID actual para la validación de unique
             'nombre' => 'required|string|max:255|unique:cantones,nombre,' . $canton->id,
+        ], [
+            'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.unique'   => 'Ya existe otro cantón con este nombre.'
         ]);
 
         try {
             $canton->update([
-                'nombre' => $request->nombre,
+                'nombre' => strtoupper($request->nombre),
             ]);
             return redirect()->route('cantones.index')->with('success', 'Cantón actualizado correctamente.');
         } catch (\Exception $e) {
@@ -85,20 +100,27 @@ class CantonController extends Controller
         }
     }
 
-    public function destroy(Canton $canton)
+    // --- ELIMINAR ---
+    public function destroy($id) // Cambiamos por $id
     {
+        $canton = Canton::findOrFail($id);
+        
         try {
+            if ($canton->parroquias()->exists()) {
+                return redirect()->route('cantones.index')->with('error', 'No se puede eliminar: tiene parroquias asociadas.');
+            }
             $canton->delete();
             return redirect()->route('cantones.index')->with('success', 'Cantón eliminado.');
         } catch (\Exception $e) {
-            return redirect()->route('cantones.index')->with('error', 'No se puede eliminar: tiene parroquias asociadas.');
+            return redirect()->route('cantones.index')->with('error', 'Ocurrió un error al intentar eliminar.');
         }
     }
-
-    // Show se mantiene igual por si quieres ver detalles
     public function show(Canton $canton)
     {
-        $canton->load('parroquias');
-        return view('cantones.canton-show', compact('canton')); // Asegúrate que esta vista exista si la usas
+        // Carga la relación 'parroquias' si existe en tu modelo Canton
+        // Si no tienes esa relación definida en el Modelo, borra ->load('parroquias')
+        $canton->load('parroquias'); 
+        
+        return view('cantones.canton-show', compact('canton'));
     }
 }

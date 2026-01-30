@@ -1,7 +1,6 @@
 <x-app-layout>
     {{-- 1. ESTILOS --}}
     <style>
-        /* ESTILO ALERTAS (VERDE PASTEL) */
         .alert-success {
             background-color: #e4f4db !important;
             color: #708736 !important;
@@ -11,15 +10,11 @@
         }
         .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
         .alert-success .btn-close:hover { opacity: 1; }
-
-        /* Estilos para input groups y focus */
         .input-group-text { border-color: #dee2e6; }
         .form-control:focus, .form-select:focus {
             border-color: #5ea6f7;
             box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25);
         }
-
-        /* Clase para inputs "delgados" */
         .compact-filter {
             width: auto; 
             min-width: 140px; 
@@ -44,12 +39,14 @@
                     <p class="mb-0 text-secondary text-sm">Administración de tipos de beneficios, tarifas y costos.</p>
                 </div>
 
-                {{-- Botón Nuevo (Abre Modal) --}}
+                {{-- PERMISO: crear beneficio --}}
+                @can('crear beneficio')
                 <button type="button" class="btn btn-success px-4 open-modal" 
                         style="height: fit-content;"
                         data-url="{{ route('beneficios.create') }}">
                     <i class="fa-solid fa-plus me-2"></i> Nuevo Beneficio
                 </button>
+                @endcan
             </div>
 
             {{-- 3. ALERTAS --}}
@@ -59,23 +56,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-            @if (session('error'))
-                <div class="alert alert-danger text-white alert-dismissible fade show alert-temporal mb-3" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
 
             {{-- 4. FORMULARIO Y FILTROS --}}
-            {{-- Asegúrate de crear la ruta POST beneficios/reports en web.php --}}
             <form action="{{ route('beneficios.reports') }}" method="POST" id="reportForm">
                 @csrf
-                {{-- Input oculto para mantener búsqueda en reporte --}}
                 <input type="hidden" name="q" value="{{ request('q') }}">
 
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
                     
-                    {{-- Botón Generar Reporte --}}
+                    {{-- PERMISO: reportar beneficio --}}
+                    @can('reportar beneficio')
                     <div class="dropdown w-100 w-md-auto">
                         <button class="btn text-white dropdown-toggle mb-0 px-4 w-100 w-md-auto" 
                                 style="background-color: #5ea6f7; border-radius: 6px; font-weight: 600;" 
@@ -87,6 +77,9 @@
                             <li><button type="submit" name="report_type" value="excel" class="dropdown-item"><i class="fas fa-file-excel text-success me-2"></i> Excel</button></li>
                         </ul>
                     </div>
+                    @else
+                    <div class="w-100 w-md-auto"></div>
+                    @endcan
 
                     {{-- Filtro Buscador --}}
                     <div class="d-flex gap-2 w-100 w-md-auto justify-content-end">
@@ -106,7 +99,12 @@
                             <table class="table table-hover table-bordered align-middle text-center mb-0">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;"></th>
+                                        <th style="width: 40px;">
+                                            {{-- Solo si puede eliminar o reportar para usar los checkboxes --}}
+                                            @if(auth()->user()->can('eliminar beneficio') || auth()->user()->can('reportar beneficio'))
+                                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;">
+                                            @endif
+                                        </th>
                                         <th style="width: 50px;">ID</th>
                                         <th>Código</th>
                                         <th>Nombre</th>
@@ -118,8 +116,11 @@
                                 <tbody>
                                     @forelse ($beneficios as $b)
                                         <tr>
-                                            {{-- Checkbox --}}
-                                            <td><input type="checkbox" name="ids[]" value="{{ $b->id }}" class="check-item" style="cursor: pointer;"></td>
+                                            <td>
+                                                @if(auth()->user()->can('eliminar beneficio') || auth()->user()->can('reportar beneficio'))
+                                                    <input type="checkbox" name="ids[]" value="{{ $b->id }}" class="check-item" style="cursor: pointer;">
+                                                @endif
+                                            </td>
                                             
                                             <td class="fw-bold text-secondary">{{ $b->id }}</td>
                                             <td class="fw-bold text-dark">{{ $b->codigo }}</td>
@@ -127,24 +128,29 @@
                                             <td><span class="badge border text-dark bg-light">{{ $b->tipo }}</span></td>
                                             <td class="fw-bold text-end pe-4">{{ $b->valor ? number_format($b->valor, 2) : '-' }}</td>
 
-                                            {{-- Acciones --}}
+                                            {{-- Acciones con permisos del Seeder --}}
                                             <td>
-                                                {{-- Ver (Modal) --}}
+                                                @can('ver beneficio')
                                                 <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal" 
                                                         data-url="{{ route('beneficios.show', $b) }}" title="Ver">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
-                                                {{-- Editar (Modal) --}}
+                                                @endcan
+
+                                                @can('editar beneficio')
                                                 <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal" 
                                                         data-url="{{ route('beneficios.edit', $b) }}" title="Editar">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </button>
-                                                {{-- Eliminar (SweetAlert) --}}
+                                                @endcan
+
+                                                @can('eliminar beneficio')
                                                 <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                         data-url="{{ route('beneficios.destroy', $b) }}"
                                                         data-item="{{ $b->codigo }} - {{ $b->nombre }}" title="Eliminar">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
+                                                @endcan
                                             </td>
                                         </tr>
                                     @empty
@@ -164,19 +170,16 @@
         {{-- MODAL DINÁMICO --}}
         <div class="modal fade" id="dynamicModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    {{-- Aquí se inyectan las vistas parciales (create, edit, show) --}}
-                </div>
+                <div class="modal-content"></div>
             </div>
         </div>
 
         <x-app.footer />
 
-        {{-- SCRIPTS --}}
+        {{-- SCRIPTS (Se mantienen igual) --}}
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                // Alertas Temporales
                 setTimeout(() => { 
                     document.querySelectorAll('.alert-temporal').forEach(alert => { 
                         alert.style.transition = "opacity 0.5s"; 
@@ -185,14 +188,12 @@
                     }); 
                 }, 3000);
 
-                // Filtro Buscador
                 const searchInput = document.getElementById('searchInput'); 
                 function applyFilters() { 
                     window.location.href = "{{ route('beneficios.index') }}?q=" + encodeURIComponent(searchInput.value); 
                 }
                 if(searchInput) searchInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyFilters(); } });
 
-                // Modal AJAX
                 const modalEl = document.getElementById('dynamicModal');
                 const modal = new bootstrap.Modal(modalEl);
                 document.querySelectorAll('.open-modal').forEach(btn => {
@@ -201,13 +202,10 @@
                         modal.show();
                         fetch(this.getAttribute('data-url'))
                             .then(r => r.text())
-                            .then(h => { 
-                                modalEl.querySelector('.modal-content').innerHTML = h; 
-                            });
+                            .then(h => { modalEl.querySelector('.modal-content').innerHTML = h; });
                     });
                 });
 
-                // SweetAlert Eliminar
                 document.querySelectorAll('.js-delete-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         Swal.fire({
@@ -231,8 +229,11 @@
             });
 
             function toggleSelectAll() { 
-                const c = document.getElementById('selectAll').checked; 
-                document.querySelectorAll('.check-item').forEach(x => x.checked = c); 
+                const check = document.getElementById('selectAll');
+                if(check) {
+                    const c = check.checked; 
+                    document.querySelectorAll('.check-item').forEach(x => x.checked = c); 
+                }
             }
         </script>
     </main>

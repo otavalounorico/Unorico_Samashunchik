@@ -128,14 +128,6 @@
                        value="{{ old('fecha_exoneracion', optional($socio->fecha_exoneracion)->format('Y-m-d')) }}" 
                        class="form-control border-success">
             </div>
-
-            {{-- Checkbox --}}
-            <div class="col-12 mt-2">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="repEdit" name="es_representante" value="1" @checked(old('es_representante', $socio->es_representante))>
-                    <label class="form-check-label user-select-none" for="repEdit">Es representante</label>
-                </div>
-            </div>
         </div>
     </div>
 

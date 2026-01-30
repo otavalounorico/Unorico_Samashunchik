@@ -1,5 +1,5 @@
 <x-app-layout>
-    {{-- 1. ESTILOS (IGUAL QUE EN NICHOS) --}}
+    {{-- 1. ESTILOS --}}
     <style>
         /* ESTILO ALERTAS (VERDE PASTEL) */
         .alert-success {
@@ -10,15 +10,8 @@
             font-size: 14px !important;
         }
 
-        .alert-success .btn-close {
-            filter: none !important;
-            opacity: 0.5;
-            color: #708736;
-        }
-
-        .alert-success .btn-close:hover {
-            opacity: 1;
-        }
+        .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
+        .alert-success .btn-close:hover { opacity: 1; }
 
         .alert-danger {
             background-color: #fde1e1 !important;
@@ -28,29 +21,16 @@
             font-size: 14px !important;
         }
 
-        .alert-danger .btn-close {
-            filter: none !important;
-            opacity: 0.5;
-            color: #cf304a;
-        }
+        .alert-danger .btn-close { filter: none !important; opacity: 0.5; color: #cf304a; }
 
         /* Estilos inputs */
-        .input-group-text {
-            border-color: #dee2e6;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
+        .input-group-text { border-color: #dee2e6; }
+        .form-control:focus, .form-select:focus {
             border-color: #5ea6f7;
             box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25);
         }
 
-        /* ESTA CLASE CONTROLA EL TAMAÑO DEL BUSCADOR */
-        .compact-filter {
-            width: auto;
-            min-width: 140px;
-            max-width: 180px;
-        }
+        .compact-filter { width: auto; min-width: 140px; max-width: 180px; }
 
         .code-badge {
             font-size: 0.85rem;
@@ -81,11 +61,13 @@
                     <p class="mb-0 text-secondary text-sm">Administra el catálogo geográfico de cantones.</p>
                 </div>
 
-                {{-- Botón Nuevo --}}
+                {{-- PERMISO: crear canton --}}
+                @can('crear canton')
                 <button type="button" class="btn btn-success px-4 open-modal" style="height: fit-content;"
                     data-url="{{ route('cantones.create') }}">
                     <i class="fa-solid fa-plus me-2"></i> Nuevo Cantón
                 </button>
+                @endcan
             </div>
 
             {{-- 3. ALERTAS --}}
@@ -102,10 +84,9 @@
                 </div>
             @endif
 
-            {{-- 4. FORMULARIO Y FILTROS (MODIFICADO: SOLO BUSCADOR COMPACTO) --}}
+            {{-- 4. FILTROS --}}
             <div class="d-flex justify-content-end mb-4">
                 <form method="GET" action="{{ route('cantones.index') }}">
-                    {{-- Aquí aplicamos la clase 'compact-filter' para que sea pequeño --}}
                     <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter shadow-sm">
                         <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
                         <input type="text" name="q" value="{{ request('q') }}"
@@ -122,7 +103,12 @@
                         <table class="table table-hover table-bordered align-middle text-center mb-0">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                                    <th style="width: 40px;">
+                                        {{-- Checkbox general protegido --}}
+                                        @if(auth()->user()->can('eliminar canton') || auth()->user()->can('reportar canton'))
+                                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                                        @endif
+                                    </th>
                                     <th style="width: 50px;">#</th>
                                     <th style="width: 20%;">Código</th>
                                     <th class="text-start ps-4">Nombre del Cantón</th>
@@ -132,29 +118,39 @@
                             <tbody>
                                 @forelse ($cantones as $canton)
                                     <tr>
-                                        <td><input type="checkbox" name="ids[]" value="{{ $canton->id }}" class="check-item"></td>
+                                        <td>
+                                            @if(auth()->user()->can('eliminar canton') || auth()->user()->can('reportar canton'))
+                                                <input type="checkbox" name="ids[]" value="{{ $canton->id }}" class="check-item">
+                                            @endif
+                                        </td>
                                         <td class="fw-bold text-secondary">{{ $cantones->firstItem() + $loop->index }}</td>
                                         <td><span class="code-badge">{{ $canton->codigo ?? 'N/A' }}</span></td>
                                         <td class="fw-bold text-start ps-4 text-dark">{{ $canton->nombre }}</td>
                                         <td>
-                                            {{-- Ver --}}
+                                            {{-- PERMISO: ver canton --}}
+                                            @can('ver canton')
                                             <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal"
                                                 data-url="{{ route('cantones.show', $canton->id) }}" title="Ver">
                                                 <i class="fa-solid fa-eye text-white" style="font-size: 0.7rem;"></i>
                                             </button>
+                                            @endcan
 
-                                            {{-- Editar --}}
+                                            {{-- PERMISO: editar canton --}}
+                                            @can('editar canton')
                                             <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal"
                                                 data-url="{{ route('cantones.edit', $canton->id) }}" title="Editar">
                                                 <i class="fa-solid fa-pen-to-square" style="font-size: 0.7rem;"></i>
                                             </button>
+                                            @endcan
 
-                                            {{-- Eliminar --}}
+                                            {{-- PERMISO: eliminar canton --}}
+                                            @can('eliminar canton')
                                             <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
                                                 data-url="{{ route('cantones.destroy', $canton) }}"
                                                 data-item="{{ $canton->nombre }}">
                                                 <i class="fa-solid fa-trash" style="font-size: 0.7rem;"></i>
                                             </button>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @empty
@@ -175,7 +171,6 @@
                 </div>
             </div>
 
-            {{-- Formulario oculto para eliminar --}}
             <form id="deleteForm" method="POST" action="" style="display:none;">@csrf @method('DELETE')</form>
         </div>
 
@@ -192,10 +187,8 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                // 1. Auto cerrar alertas
                 setTimeout(() => { document.querySelectorAll('.alert-temporal').forEach(alert => { alert.style.transition = "opacity 0.5s"; alert.style.opacity = 0; setTimeout(() => alert.remove(), 500); }); }, 3000);
 
-                // 2. Modal Dinámico
                 const modalEl = document.getElementById('dynamicModal');
                 const modal = new bootstrap.Modal(modalEl);
                 document.querySelectorAll('.open-modal').forEach(btn => {
@@ -206,7 +199,6 @@
                     });
                 });
 
-                // 3. SweetAlert Eliminar
                 document.querySelectorAll('.js-delete-btn').forEach(btn => {
                     btn.addEventListener('click', function () {
                         Swal.fire({
@@ -214,7 +206,7 @@
                             html: `¿Deseas eliminar el cantón <b>"${this.getAttribute('data-item')}"</b>?`,
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonColor: '#d33',
+                            confirmButtonColor: '#d33', 
                             cancelButtonColor: '#3085d6',
                             confirmButtonText: 'Sí, eliminar',
                             cancelButtonText: 'Cancelar'
@@ -229,7 +221,13 @@
                 });
             });
 
-            function toggleSelectAll() { const c = document.getElementById('selectAll').checked; document.querySelectorAll('.check-item').forEach(x => x.checked = c); }
+            function toggleSelectAll() { 
+                const selectAll = document.getElementById('selectAll');
+                if(selectAll){
+                    const c = selectAll.checked; 
+                    document.querySelectorAll('.check-item').forEach(x => x.checked = c); 
+                }
+            }
         </script>
     </main>
-</x-app-layout>
+</x-app-layout> 

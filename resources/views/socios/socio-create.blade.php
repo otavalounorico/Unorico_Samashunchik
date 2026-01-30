@@ -119,14 +119,6 @@
                     <option value="fallecido">Fallecido</option>
                 </select>
             </div>
-
-            {{-- Checkbox Representante --}}
-            <div class="col-12 mt-2">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="rep" name="es_representante" value="1" @checked(old('es_representante'))>
-                    <label class="form-check-label user-select-none" for="rep">Es representante</label>
-                </div>
-            </div>
         </div>
     </div>
 

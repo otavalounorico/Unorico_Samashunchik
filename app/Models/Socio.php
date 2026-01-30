@@ -20,7 +20,7 @@ class Socio extends Model implements Auditable
         'fecha_nac' => 'date',
         'fecha_inscripcion' => 'date',
         'fecha_exoneracion' => 'date',
-        'es_representante' => 'boolean',
+// 'es_representante' => 'boolean',  <-- ¡BORRA ESTA LÍNEA! CAUSA EL ERROR
     ];
 
     protected static function booted()
@@ -29,9 +29,16 @@ class Socio extends Model implements Auditable
             $ultimoId = Socio::max('id') ?? 0;
             $nuevoId = $ultimoId + 1;
             $socio->codigo = 'SOC' . str_pad($nuevoId, 4, '0', STR_PAD_LEFT);
+            
+            $socio->created_by = auth()->id() ?? 1;
+
+            // SOLUCIÓN DEFINITIVA: 
+            // Enviamos la letra 'f'. Postgres la interpreta como FALSE sin dar error.
+            if (!isset($socio->es_representante)) {
+                $socio->es_representante = 'f'; 
+            }
         });
     }
-
     public function getEdadAttribute()
     {
         return $this->fecha_nac ? $this->fecha_nac->age : 'N/A';
