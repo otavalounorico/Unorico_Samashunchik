@@ -57,13 +57,33 @@ class AsignacionController extends Controller
     }
 
     // --- 2. CREATE: FORMULARIO DE ASIGNACIÓN ---
-    public function create()
+public function create()
     {
-        $nichosDisponibles = Nicho::where('disponible', true)->get();
-        $socios = Socio::orderBy('apellidos')->get();
-        $fallecidos = Fallecido::doesntHave('nichos')->orderBy('apellidos')->get();
+        try {
+            // 1. NICHOS
+            $nichosDisponibles = Nicho::with('bloque')
+                ->withCount('fallecidos') 
+                // CORRECCIÓN AQUÍ:
+                // Usamos whereRaw para forzar la comparación booleana correcta en PostgreSQL
+                // en lugar de ->where('disponible', true) que envía un 1.
+                ->whereRaw('disponible = true') 
+                ->orderBy('id', 'desc')
+                ->get();
 
-        return view('asignaciones.asignacion-create', compact('nichosDisponibles', 'socios', 'fallecidos'));
+            // 2. SOCIOS
+            $socios = Socio::orderBy('id', 'desc')->get();
+
+            // 3. FALLECIDOS
+            $fallecidos = Fallecido::doesntHave('nichos')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            return view('asignaciones.asignacion-create', compact('nichosDisponibles', 'socios', 'fallecidos'));
+
+        } catch (\Exception $e) {
+            // Si falla, te mostrará el error en pantalla
+            dd("ERROR EN CREATE ASIGNACIÓN: " . $e->getMessage()); 
+        }
     }
 
     // --- 3. SHOW: VER DETALLE ---
