@@ -60,7 +60,7 @@ class RegisterController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'status' => false,
+            // 'status' => false,
         ]);
     
         return redirect()->route('sign-in')->with('success', 'Registro exitoso. Tu cuenta será activada por un administrador.');

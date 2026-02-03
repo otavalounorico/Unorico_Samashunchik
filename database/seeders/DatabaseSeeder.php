@@ -5,12 +5,12 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB; // <--- AGREGA ESTO
 
 class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // Primero se crean los roles y permisos
         $this->call(RolesAndPermissionsSeeder::class);
 
         // ✅ Usuario Admin ACTIVO
@@ -18,8 +18,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Alec Thompson',
             'email' => 'admin@corporateui.com',
             'password' => Hash::make('secret'),
-            'about' => "Hi, I’m Alec Thompson, Decisions: If you can’t decide, the answer is no...",
-            'status' => true,
+            'about' => "Hi, I’m Alec Thompson...",
+            // FORZAMOS EL VALOR LITERAL SQL 'true'
+            'status' => DB::raw('true'), 
         ]);
         $admin->assignRole('Administrador');
 
@@ -28,8 +29,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'María López',
             'email' => 'usuario@corporateui.com',
             'password' => Hash::make('1234567'),
-            'about' => 'Soy una usuaria con permisos para explorar archivos.',
-            'status' => false,
+            'about' => 'Soy una usuaria...',
+            // FORZAMOS EL VALOR LITERAL SQL 'false'
+            'status' => DB::raw('false'), 
         ]);
         $usuario->assignRole('Usuario');
 
@@ -38,14 +40,13 @@ class DatabaseSeeder extends Seeder
             'name' => 'Carlos Pérez',
             'email' => 'auditor@corporateui.com',
             'password' => Hash::make('12345678'),
-            'about' => 'Auditor del sistema, acceso solo a auditorías.',
-            'status' => false,
+            'about' => 'Auditor del sistema...',
+            // FORZAMOS EL VALOR LITERAL SQL 'false'
+            'status' => DB::raw('false'), 
         ]);
         $auditor->assignRole('Auditor');
 
-        // Luego se crean los catálogos
         $this->call(CatalogosSeeder::class);
-        
         $this->call(BeneficioSeeder::class);
     }
 }

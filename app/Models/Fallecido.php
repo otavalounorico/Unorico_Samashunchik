@@ -58,7 +58,8 @@ class Fallecido extends Model implements Auditable
     {
         return $this->belongsToMany(Nicho::class, 'fallecido_nicho')
                     ->using(FallecidoNicho::class)
-                    ->withPivot('posicion', 'fecha_inhumacion', 'fecha_exhumacion')
+                    ->withPivot('socio_id',
+                    'codigo','posicion', 'fecha_inhumacion', 'fecha_exhumacion')
                     ->withTimestamps();
     }
 }

@@ -6,8 +6,6 @@
 <form method="POST" action="{{ route('asignaciones.store') }}">
     @csrf
     <div class="modal-body">
-        
-        {{-- Mensaje de Error si existe --}}
         @if ($errors->any()) 
             <div class="alert alert-danger py-2 text-xs">
                 <ul class="mb-0 ps-3">@foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach</ul>
@@ -15,16 +13,14 @@
         @endif
 
         <div class="row g-3">
-            {{-- 1. NICHOS --}}
+            {{-- 1. NICHOS DISPONIBLES --}}
             <div class="col-12">
                 <label class="form-label fw-bold">1. Nicho Disponible <span class="text-danger">*</span></label>
                 <select name="nicho_id" class="form-select" required>
                     <option value="">-- Seleccionar Nicho --</option>
                     @foreach($nichosDisponibles as $n)
                         <option value="{{ $n->id }}">
-                            {{-- BLINDAJE: Usamos optional() y ?? para evitar pantallas blancas --}}
-                            {{ $n->codigo }} - 
-                            Bloque {{ optional($n->bloque)->nombre ?? optional($n->bloque)->descripcion ?? 'N/A' }} 
+                            {{ $n->codigo }} - Bloque {{ optional($n->bloque)->nombre ?? 'N/A' }} 
                             ({{ $n->fallecidos_count ?? 0 }}/3 Ocupados)
                         </option>
                     @endforeach
@@ -33,16 +29,14 @@
 
             <div class="col-12"><hr class="my-1 text-muted"></div>
 
-            {{-- 2. SOCIOS --}}
+            {{-- 2. SOCIO RESPONSABLE --}}
             <div class="col-md-8">
                 <label class="form-label fw-bold">2. Socio Responsable <span class="text-danger">*</span></label>
                 <select name="socio_id" class="form-select" required>
                     <option value="">-- Buscar Socio --</option>
                     @foreach($socios as $s)
                         <option value="{{ $s->id }}">
-                            {{-- BLINDAJE: Probamos apellidos (plural) y apellido (singular) --}}
-                            {{ $s->apellidos ?? $s->apellido ?? 'Socio' }} {{ $s->nombres ?? $s->nombre ?? '' }} 
-                            ({{ $s->cedula ?? 'S/C' }})
+                            {{ $s->apellidos }} {{ $s->nombres }} ({{ $s->cedula }})
                         </option>
                     @endforeach
                 </select>
@@ -66,8 +60,7 @@
                     <option value="">-- Buscar Fallecido --</option>
                     @foreach($fallecidos as $f)
                         <option value="{{ $f->id }}">
-                            {{-- BLINDAJE: Probamos plural y singular --}}
-                            {{ $f->apellidos ?? $f->apellido ?? 'Fallecido' }} {{ $f->nombres ?? $f->nombre ?? '' }}
+                            {{ $f->apellidos }} {{ $f->nombres }} ({{ $f->cedula }})
                         </option>
                     @endforeach
                 </select>

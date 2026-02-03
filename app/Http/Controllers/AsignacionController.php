@@ -127,7 +127,6 @@ public function store(Request $request)
 
         try {
             DB::transaction(function () use ($request) {
-
                 $nicho = Nicho::findOrFail($request->nicho_id);
 
                 // 1. Validar capacidad
@@ -139,7 +138,7 @@ public function store(Request $request)
                     throw new \Exception("El nicho ya está al límite (3 fallecidos).");
                 }
 
-                // 2. Asignar Socio
+                // 2. Asignar Socio al Nicho (Relación general del espacio)
                 $nicho->socios()->syncWithoutDetaching([
                     $request->socio_id => [
                         'rol' => $request->rol,
@@ -147,18 +146,15 @@ public function store(Request $request)
                     ]
                 ]);
 
-                // --- 3. GENERAR CÓDIGO (LÓGICA NUEVA) ---
-                // Buscamos el ID más alto actual y sumamos 1
-                // Usamos DB::table directo porque es más rápido para obtener el ID max
+                // 3. Generar Código Correlativo
                 $ultimoId = DB::table('fallecido_nicho')->max('id') ?? 0;
                 $siguienteId = $ultimoId + 1;
-                
-                // Genera formato: ASG-00001
-                $codigoGenerado = 'ASG-' . str_pad($siguienteId, 5, '0', STR_PAD_LEFT);
+                $codigoGenerado = 'ASG-' . str_pad($siguienteId, 2, '0', STR_PAD_LEFT);
 
-                // 4. Asignar Fallecido (Incluyendo el código)
+                // 4. Asignar Fallecido con el SOCIO_ID vinculado al registro
                 $nicho->fallecidos()->attach($request->fallecido_id, [
-                    'codigo'           => $codigoGenerado, // <--- AQUÍ SE GUARDA
+                    'socio_id'         => $request->socio_id, // <--- CAMBIO AQUÍ
+                    'codigo'           => $codigoGenerado,
                     'posicion'         => $ocupantesActivos + 1,
                     'fecha_inhumacion' => now(),
                     'observacion'      => 'Ingreso registrado'
@@ -172,7 +168,7 @@ public function store(Request $request)
                 ]);
             });
 
-            return back()->with('success', 'Asignación correcta. El nicho se ha actualizado.');
+            return back()->with('success', 'Asignación correcta. El registro se vinculó al socio.');
 
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -223,53 +219,38 @@ public function store(Request $request)
     }
 
     // --- ACTUALIZAR / CORREGIR ERROR ---
-    public function update(Request $request, $nicho_id)
+public function update(Request $request, $nicho_id)
     {
         $request->validate([
-            'socio_id'          => 'required|exists:socios,id',
-            'socio_anterior_id' => 'required|exists:socios,id',
-            'fallecido_id'      => 'required|exists:fallecidos,id',
-            'fallecido_anterior_id' => 'required|exists:fallecidos,id', // Validamos el anterior
-            'fecha_inhumacion'  => 'required|date',
-            'observacion'       => 'nullable|string',
-            'rol'               => 'required|string'
+            'socio_id'              => 'required|exists:socios,id',
+            'socio_anterior_id'     => 'required|exists:socios,id',
+            'fallecido_id'          => 'required|exists:fallecidos,id',
+            'fallecido_anterior_id' => 'required|exists:fallecidos,id',
+            'fecha_inhumacion'      => 'required|date',
+            'rol'                   => 'required|string'
         ]);
 
         try {
             DB::transaction(function () use ($request, $nicho_id) {
                 $nicho = Nicho::findOrFail($nicho_id);
 
-                // A. CORREGIR EL SOCIO
+                // A. Actualizar Socio en la tabla general de nichos
                 if ($request->socio_id != $request->socio_anterior_id) {
                     $nicho->socios()->detach($request->socio_anterior_id);
                     $nicho->socios()->syncWithoutDetaching([
                         $request->socio_id => ['rol' => $request->rol, 'desde' => now()]
                     ]);
-                } else {
-                    $nicho->socios()->updateExistingPivot($request->socio_id, ['rol' => $request->rol]);
                 }
 
-                // B. CORREGIR FALLECIDO (SI HUBO ERROR DE SELECCIÓN)
-                if ($request->fallecido_id != $request->fallecido_anterior_id) {
-                    // 1. Sacamos al equivocado
-                    $nicho->fallecidos()->detach($request->fallecido_anterior_id);
-                    
-                    // 2. Metemos al correcto (conservando posición si es posible)
-                    $nicho->fallecidos()->attach($request->fallecido_id, [
-                        'posicion' => 1, 
-                        'fecha_inhumacion' => $request->fecha_inhumacion,
-                        'observacion' => $request->observacion
-                    ]);
-                } else {
-                    // Si es el mismo, solo actualizamos datos
-                    $nicho->fallecidos()->updateExistingPivot($request->fallecido_id, [
-                        'fecha_inhumacion' => $request->fecha_inhumacion,
-                        'observacion'      => $request->observacion,
-                    ]);
-                }
+                // B. Actualizar registro en fallecido_nicho incluyendo el nuevo socio_id
+                $nicho->fallecidos()->updateExistingPivot($request->fallecido_id, [
+                    'socio_id'         => $request->socio_id, // <--- Mantiene sincronía
+                    'fecha_inhumacion' => $request->fecha_inhumacion,
+                    'observacion'      => $request->observacion,
+                ]);
             });
 
-            return back()->with('success', 'Datos corregidos correctamente.');
+            return back()->with('success', 'Datos corregidos y socio sincronizado.');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error al actualizar: ' . $e->getMessage());
@@ -277,29 +258,28 @@ public function store(Request $request)
     }
 
     // --- ELIMINAR (BORRAR ERROR) ---
-    public function destroy($nicho_id, $fallecido_id)
+public function destroy($nicho_id, $fallecido_id)
     {
         try {
             DB::transaction(function () use ($nicho_id, $fallecido_id) {
                 $nicho = Nicho::findOrFail($nicho_id);
 
-                // 1. Sacar al fallecido
+                // 1. Sacar al fallecido (la tabla pivote se limpia)
                 $nicho->fallecidos()->detach($fallecido_id);
 
-                // 2. Recalcular Estado
+                // 2. Verificar si quedan más fallecidos del mismo socio
+                // Si el nicho queda vacío, podrías evaluar si quitar al socio también
                 $ocupantesRestantes = $nicho->fallecidos()
                     ->wherePivot('fecha_exhumacion', null)
                     ->count();
 
-                if ($ocupantesRestantes < 3) {
-                    $nicho->update([
-                        'estado' => ($ocupantesRestantes > 0) ? 'OCUPADO' : 'DISPONIBLE',
-                        'disponible' => true
-                    ]);
-                }
+                $nicho->update([
+                    'estado' => ($ocupantesRestantes > 0) ? 'OCUPADO' : 'DISPONIBLE',
+                    'disponible' => true
+                ]);
             });
 
-            return back()->with('success', 'Registro eliminado y espacio liberado.');
+            return back()->with('success', 'Registro eliminado correctamente.');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error al eliminar: ' . $e->getMessage());

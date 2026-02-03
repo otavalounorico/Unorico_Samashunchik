@@ -8,15 +8,17 @@
 
     @php
         $socioActual = $nicho->socios->first();
-        $fallecidoActual = $nicho->fallecidos->sortByDesc('pivot.created_at')->first();
+        $fallecidoActual = $nicho->fallecidos->where('pivot.fecha_exhumacion', null)->first();
     @endphp
 
+    {{-- Mantenemos los IDs anteriores para que el controlador haga el swap --}}
     <input type="hidden" name="socio_anterior_id" value="{{ $socioActual->id ?? '' }}">
     <input type="hidden" name="fallecido_anterior_id" value="{{ $fallecidoActual->id ?? '' }}">
 
     <div class="modal-body">
-        <div class="alert alert-warning py-2 mb-3 text-xs"><i class="fas fa-exclamation-triangle me-1"></i> Use esto para corregir errores de selección.</div>
-        @if ($errors->any()) <div class="alert alert-danger py-2 text-xs"><ul class="mb-0 ps-3">@foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach</ul></div> @endif
+        <div class="alert alert-warning py-2 mb-3 text-xs">
+            <i class="fas fa-exclamation-triangle me-1"></i> Use esto para corregir errores de selección.
+        </div>
 
         <div class="row g-3">
             <div class="col-12">
@@ -28,7 +30,9 @@
                 <label class="form-label fw-bold">Socio Responsable</label>
                 <select name="socio_id" class="form-select">
                     @foreach($socios as $s)
-                        <option value="{{ $s->id }}" @selected($socioActual && $s->id == $socioActual->id)>{{ $s->apellidos }} {{ $s->nombres }}</option>
+                        <option value="{{ $s->id }}" @selected($socioActual && $s->id == $socioActual->id)>
+                            {{ $s->apellidos }} {{ $s->nombres }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -47,24 +51,26 @@
                 @if($fallecidoActual)
                     <select name="fallecido_id" class="form-select mb-2">
                         @foreach($fallecidos as $f)
-                            <option value="{{ $f->id }}" @selected($f->id == $fallecidoActual->id)>{{ $f->apellidos }} {{ $f->nombres }}</option>
+                            <option value="{{ $f->id }}" @selected($f->id == $fallecidoActual->id)>
+                                {{ $f->apellidos }} {{ $f->nombres }}
+                            </option>
                         @endforeach
                     </select>
+                    
+                    <div class="col-md-6 mt-2">
+                        <label class="form-label fw-bold">Fecha Inhumación</label>
+                        <input type="date" name="fecha_inhumacion" 
+                               value="{{ $fallecidoActual->pivot->fecha_inhumacion ? $fallecidoActual->pivot->fecha_inhumacion->format('Y-m-d') : '' }}" 
+                               class="form-control" required>
+                    </div>
+                    <div class="col-md-12 mt-2">
+                        <label class="form-label fw-bold">Observación</label>
+                        <textarea name="observacion" class="form-control" rows="2">{{ $fallecidoActual->pivot->observacion }}</textarea>
+                    </div>
                 @else
-                    <div class="text-muted">No hay fallecido para editar.</div>
+                    <div class="text-muted">No hay fallecido activo para editar.</div>
                 @endif
             </div>
-
-            @if($fallecidoActual)
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Fecha Inhumación</label>
-                    <input type="date" name="fecha_inhumacion" value="{{ optional($fallecidoActual->pivot->fecha_inhumacion)->format('Y-m-d') }}" class="form-control" required>
-                </div>
-                <div class="col-md-12">
-                    <label class="form-label fw-bold">Observación</label>
-                    <textarea name="observacion" class="form-control" rows="2">{{ $fallecidoActual->pivot->observacion }}</textarea>
-                </div>
-            @endif
         </div>
     </div>
     <div class="modal-footer">
