@@ -7,8 +7,14 @@ ENV RUN_SCRIPTS=1
 ENV REAL_IP_HEADER=1
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+# Remover prestissimo si existe (incompatible con PHP 8.2 y Composer 2)
+RUN composer global remove hirak/prestissimo --no-interaction 2>/dev/null || true
+
 # Copiamos el código de la aplicación
 COPY . /var/www/html
+
+# Copiar configuración de nginx personalizada
+COPY nginx-default.conf /etc/nginx/sites-available/default.conf
 
 # Establecer directorio de trabajo
 WORKDIR /var/www/html
