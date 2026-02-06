@@ -1,30 +1,21 @@
-{{-- ESTILOS LOCALES PARA ESTA VISTA --}}
+{{-- ESTILOS LOCALES --}}
 <style>
-    .badge-oscuro {
-        background-color: #999da0ff !important; 
-        color: #ffffff !important;
-    }
+    .badge-oscuro { background-color: #999da0ff !important; color: #ffffff !important; }
 </style>
 
-{{-- CABECERA DEL MODAL --}}
+{{-- CABECERA --}}
 <div class="modal-header bg-info text-white border-bottom-0 pb-0">
     <h5 class="modal-title fw-bold">Detalle del Cantón</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
-{{-- CUERPO DEL MODAL --}}
+{{-- CUERPO --}}
 <div class="modal-body pt-3">
 
-    {{-- Tarjeta destacada para Código e ID --}}
-    <div class="alert alert-light border d-flex justify-content-between align-items-center mb-3 p-3 shadow-sm">
-        <div>
-            <small class="d-block text-muted text-uppercase" style="font-size: 0.7rem;">Código del Cantón</small>
-            <span class="fw-bold text-dark fs-5">{{ $canton->codigo }}</span>
-        </div>
-        <div class="text-end border-start ps-3">
-            <small class="d-block text-muted text-uppercase" style="font-size: 0.7rem;">ID Interno</small>
-            <span class="fw-bold text-dark fs-5">#{{ $canton->id }}</span>
-        </div>
+    {{-- Tarjeta SOLO con el Código (ID Interno eliminado) --}}
+    <div class="alert alert-light border text-center mb-3 p-3 shadow-sm">
+        <small class="d-block text-muted text-uppercase" style="font-size: 0.7rem;">Código del Cantón</small>
+        <span class="fw-bold text-dark fs-4">{{ $canton->codigo }}</span>
     </div>
 
     <div class="row g-3">
@@ -69,7 +60,6 @@
     </div>
 </div>
 
-{{-- PIE DEL MODAL --}}
 <div class="modal-footer border-top-0 pt-0">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
 </div>

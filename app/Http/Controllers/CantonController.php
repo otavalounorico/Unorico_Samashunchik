@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Canton;
 use Illuminate\Support\Facades\DB; // <--- IMPORTANTE: Faltaba esto para que funcione la búsqueda
+use Illuminate\Validation\Rule;
 
 class CantonController extends Controller
 {
@@ -40,9 +41,12 @@ class CantonController extends Controller
         return view('cantones.canton-create', compact('isModal'));
     }
 
-    public function store(Request $request)
+public function store(Request $request)
     {
-        // 1. Validaciones
+        // 1. SOLUCIÓN: Convertimos a mayúsculas ANTES de validar
+        // Así la validación compara "OTAVALO" con lo que hay en la BD.
+        $request->merge(['nombre' => strtoupper($request->nombre)]);
+
         $request->validate([
             'nombre' => 'required|string|max:255|unique:cantones,nombre',
         ], [
@@ -52,17 +56,15 @@ class CantonController extends Controller
         ]);
 
         try {
-            // 2. Crear
-            Canton::create([
-                'nombre' => strtoupper($request->nombre), // Guardamos en mayúsculas por estándar
-            ]);
+            // Ya no hace falta strtoupper aquí porque lo hicimos en el merge arriba
+            Canton::create($request->all());
 
             return redirect()->route('cantones.index')
                 ->with('success', 'Cantón creado correctamente.');
 
         } catch (\Exception $e) {
             return redirect()->back()
-                ->withInput() // Devuelve lo que el usuario escribió
+                ->withInput()
                 ->with('error', 'Error al crear: ' . $e->getMessage());
         }
     }
@@ -78,22 +80,22 @@ class CantonController extends Controller
     }
 
     // --- ACTUALIZAR ---
-    public function update(Request $request, $id) // Cambiamos por $id
+public function update(Request $request, $id)
     {
-        $canton = Canton::findOrFail($id); // Buscamos el registro
+        $canton = Canton::findOrFail($id);
+
+        // Convertimos a mayúsculas ANTES de validar también aquí
+        $request->merge(['nombre' => strtoupper($request->nombre)]);
 
         $request->validate([
-            // Ignoramos el ID actual para la validación de unique
-            'nombre' => 'required|string|max:255|unique:cantones,nombre,' . $canton->id,
+            'nombre' => ['required', 'string', 'max:255', Rule::unique('cantones')->ignore($canton->id)],
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.unique'   => 'Ya existe otro cantón con este nombre.'
         ]);
 
         try {
-            $canton->update([
-                'nombre' => strtoupper($request->nombre),
-            ]);
+            $canton->update($request->all());
             return redirect()->route('cantones.index')->with('success', 'Cantón actualizado correctamente.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al actualizar: ' . $e->getMessage());
@@ -101,7 +103,7 @@ class CantonController extends Controller
     }
 
     // --- ELIMINAR ---
-    public function destroy($id) // Cambiamos por $id
+public function destroy($id)
     {
         $canton = Canton::findOrFail($id);
         
@@ -115,12 +117,9 @@ class CantonController extends Controller
             return redirect()->route('cantones.index')->with('error', 'Ocurrió un error al intentar eliminar.');
         }
     }
-    public function show(Canton $canton)
+public function show(Canton $canton)
     {
-        // Carga la relación 'parroquias' si existe en tu modelo Canton
-        // Si no tienes esa relación definida en el Modelo, borra ->load('parroquias')
-        $canton->load('parroquias'); 
-        
+        $canton->load('parroquias');
         return view('cantones.canton-show', compact('canton'));
     }
 }

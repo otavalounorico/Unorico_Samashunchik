@@ -42,7 +42,7 @@ class Canton extends Model implements Auditable
 
                 // 3. Formateamos: prefijo "CA" + número relleno con ceros a la izquierda (3 dígitos)
                 // Ej: 1 -> CA001, 99 -> CA099, 100 -> CA100
-                $canton->codigo = 'CA' . str_pad($numero, 3, '0', STR_PAD_LEFT);
+                $canton->codigo = 'CA-' . str_pad($numero, 2, '0', STR_PAD_LEFT);
             }
         });
     }

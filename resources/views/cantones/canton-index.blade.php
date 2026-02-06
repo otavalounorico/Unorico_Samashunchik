@@ -1,54 +1,35 @@
 <x-app-layout>
-    {{-- 1. ESTILOS --}}
+    {{-- 1. ESTILOS (Idénticos al Index de Usuarios) --}}
     <style>
-        /* ESTILO ALERTAS (VERDE PASTEL) */
-        .alert-success {
-            background-color: #e4f4db !important;
-            color: #708736 !important;
-            border-color: #e4f4db !important;
-            font-weight: 400 !important;
-            font-size: 14px !important;
-        }
-
+        /* ALERTAS */
+        .alert-success { background-color: #e4f4db !important; color: #708736 !important; border-color: #e4f4db !important; font-size: 14px !important; }
         .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
         .alert-success .btn-close:hover { opacity: 1; }
-
-        .alert-danger {
-            background-color: #fde1e1 !important;
-            color: #cf304a !important;
-            border-color: #fde1e1 !important;
-            font-weight: 400 !important;
-            font-size: 14px !important;
-        }
-
+        .alert-danger { background-color: #fde1e1 !important; color: #cf304a !important; border-color: #fde1e1 !important; font-size: 14px !important; }
         .alert-danger .btn-close { filter: none !important; opacity: 0.5; color: #cf304a; }
 
-        /* Estilos inputs */
+        /* BUSCADOR Y FILTROS */
         .input-group-text { border-color: #dee2e6; }
-        .form-control:focus, .form-select:focus {
-            border-color: #5ea6f7;
-            box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25);
-        }
+        .form-control:focus, .form-select:focus { border-color: #5ea6f7; box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25); }
+        .compact-filter { width: auto; min-width: 140px; max-width: 180px; } 
 
-        .compact-filter { width: auto; min-width: 140px; max-width: 180px; }
-
-        .code-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
-            background-color: #f0f2f5;
-            color: #344767;
-            border: 1px solid #dee2e6;
-            padding: 5px 10px;
-            border-radius: 6px;
-            display: inline-block;
+        /* ESTILOS DE TABLA (Formato Usuarios/Asignaciones) */
+        .table thead th {
+            font-size: 14px !important;    
+            text-transform: uppercase;    
+            letter-spacing: 0.05rem;      
+            font-weight: 700 !important;  
+            padding-top: 15px !important; 
+            padding-bottom: 15px !important; 
         }
+        .btn-action { margin-right: 4px; }
     </style>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         <x-app.navbar />
 
         <div class="container py-4">
-
+            
             {{-- 2. ENCABEZADO --}}
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
                 <div class="mb-3 mb-md-0">
@@ -61,7 +42,7 @@
                     <p class="mb-0 text-secondary text-sm">Administra el catálogo geográfico de cantones.</p>
                 </div>
 
-                {{-- PERMISO: crear canton --}}
+                {{-- Botón Nuevo Cantón --}}
                 @can('crear canton')
                 <button type="button" class="btn btn-success px-4 open-modal" style="height: fit-content;"
                     data-url="{{ route('cantones.create') }}">
@@ -70,21 +51,46 @@
                 @endcan
             </div>
 
-            {{-- 3. ALERTAS --}}
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show alert-temporal mb-3" role="alert">
-                    <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="alert alert-danger alert-dismissible fade show alert-temporal mb-3" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
+            {{-- 3. ALERTAS (MODIFICADO PARA DETECTAR ERRORES DE VALIDACIÓN) --}}
+            <div class="mb-3">
+                
+                {{-- A. Éxito --}}
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show alert-temporal" role="alert">
+                        <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
-            {{-- 4. FILTROS --}}
+                {{-- B. Errores Generales (Try/Catch) --}}
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show alert-temporal" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                {{-- C. Errores de Validación (AQUÍ SALDRÁ "El nombre ya está registrado") --}}
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show alert-temporal" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>No se pudo guardar:</strong>
+                                <ul class="mb-0 ps-3" style="list-style-type: none; padding-left: 0;">
+                                    @foreach ($errors->all() as $error)
+                                        <li>- {{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+            </div>
+
+            {{-- 4. BUSCADOR --}}
             <div class="d-flex justify-content-end mb-4">
                 <form method="GET" action="{{ route('cantones.index') }}">
                     <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter shadow-sm">
@@ -98,21 +104,20 @@
 
             {{-- 5. TABLA --}}
             <div class="card shadow-sm border">
-                <div class="card-body p-3">
+                <div class="card-body p-0 pb-2"> 
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered align-middle text-center mb-0">
-                            <thead class="table-dark">
+                        <table class="table table-hover align-middle text-center mb-0">
+                            <thead class="bg-dark text-white">
                                 <tr>
-                                    <th style="width: 40px;">
-                                        {{-- Checkbox general protegido --}}
+                                    <th class="opacity-10" style="width: 40px;">
                                         @if(auth()->user()->can('eliminar canton') || auth()->user()->can('reportar canton'))
-                                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;">
                                         @endif
                                     </th>
-                                    <th style="width: 50px;">#</th>
-                                    <th style="width: 20%;">Código</th>
-                                    <th class="text-start ps-4">Nombre del Cantón</th>
-                                    <th style="width:180px;">Acciones</th>
+                                    <th class="opacity-10" style="width: 50px;">#</th>
+                                    <th class="opacity-10" style="width: 20%;">Código</th>
+                                    <th class="opacity-10 text-start ps-4">Nombre</th>
+                                    <th class="opacity-10" style="width:180px;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -120,42 +125,51 @@
                                     <tr>
                                         <td>
                                             @if(auth()->user()->can('eliminar canton') || auth()->user()->can('reportar canton'))
-                                                <input type="checkbox" name="ids[]" value="{{ $canton->id }}" class="check-item">
+                                                <input type="checkbox" name="ids[]" value="{{ $canton->id }}" class="check-item" style="cursor: pointer;">
                                             @endif
                                         </td>
-                                        <td class="fw-bold text-secondary">{{ $cantones->firstItem() + $loop->index }}</td>
-                                        <td><span class="code-badge">{{ $canton->codigo ?? 'N/A' }}</span></td>
-                                        <td class="fw-bold text-start ps-4 text-dark">{{ $canton->nombre }}</td>
+                                        
+                                        <td class="text-sm fw-bold text-secondary">
+                                            {{ $cantones->firstItem() + $loop->index }}
+                                        </td>
+                                        
+                                        <td class="fw-bold text-dark">{{ $canton->codigo ?? 'N/A' }}</td>
+                                        
+                                        <td class="text-start ps-4">
+                                            <span class="text-sm font-weight-bold">{{ $canton->nombre }}</span>
+                                        </td>
+                                        
                                         <td>
-                                            {{-- PERMISO: ver canton --}}
-                                            @can('ver canton')
-                                            <button type="button" class="btn btn-sm btn-info mb-0 me-1 open-modal"
-                                                data-url="{{ route('cantones.show', $canton->id) }}" title="Ver">
-                                                <i class="fa-solid fa-eye text-white" style="font-size: 0.7rem;"></i>
-                                            </button>
-                                            @endcan
+                                            <div class="d-flex justify-content-center">
+                                                @can('ver canton')
+                                                <button type="button" class="btn btn-sm btn-info mb-0 btn-action open-modal"
+                                                    data-url="{{ route('cantones.show', $canton->id) }}" title="Ver">
+                                                    <i class="fa-solid fa-eye text-white" style="font-size: 0.7rem;"></i>
+                                                </button>
+                                                @endcan
 
-                                            {{-- PERMISO: editar canton --}}
-                                            @can('editar canton')
-                                            <button type="button" class="btn btn-sm btn-warning mb-0 me-1 open-modal"
-                                                data-url="{{ route('cantones.edit', $canton->id) }}" title="Editar">
-                                                <i class="fa-solid fa-pen-to-square" style="font-size: 0.7rem;"></i>
-                                            </button>
-                                            @endcan
+                                                @can('editar canton')
+                                                <button type="button" class="btn btn-sm btn-warning mb-0 btn-action open-modal"
+                                                    data-url="{{ route('cantones.edit', $canton->id) }}" title="Editar">
+                                                    <i class="fa-solid fa-pen-to-square" style="font-size: 0.7rem;"></i>
+                                                </button>
+                                                @endcan
 
-                                            {{-- PERMISO: eliminar canton --}}
-                                            @can('eliminar canton')
-                                            <button type="button" class="btn btn-sm btn-danger mb-0 js-delete-btn"
-                                                data-url="{{ route('cantones.destroy', $canton) }}"
-                                                data-item="{{ $canton->nombre }}">
-                                                <i class="fa-solid fa-trash" style="font-size: 0.7rem;"></i>
-                                            </button>
-                                            @endcan
+                                                @can('eliminar canton')
+                                                <button type="button" class="btn btn-sm btn-danger mb-0 btn-action js-delete-btn"
+                                                    data-url="{{ route('cantones.destroy', $canton) }}"
+                                                    data-item="{{ $canton->nombre }}" title="Eliminar">
+                                                    <i class="fa-solid fa-trash" style="font-size: 0.7rem;"></i>
+                                                </button>
+                                                @endcan
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No se encontraron cantones.</td>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            No se encontraron cantones registrados.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -164,8 +178,8 @@
 
                     {{-- Paginación --}}
                     @if($cantones->hasPages())
-                        <div class="mt-3 d-flex justify-content-end">
-                            {{ $cantones->links() }}
+                        <div class="mt-3 px-3 d-flex justify-content-end">
+                            {{ $cantones->appends(request()->query())->links() }}
                         </div>
                     @endif
                 </div>
@@ -187,8 +201,15 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                setTimeout(() => { document.querySelectorAll('.alert-temporal').forEach(alert => { alert.style.transition = "opacity 0.5s"; alert.style.opacity = 0; setTimeout(() => alert.remove(), 500); }); }, 3000);
+                // Alertas (incluye la nueva de validación)
+                setTimeout(() => { 
+                    document.querySelectorAll('.alert-temporal').forEach(alert => { 
+                        alert.style.transition = "opacity 0.5s"; alert.style.opacity = 0; 
+                        setTimeout(() => alert.remove(), 500); 
+                    }); 
+                }, 4000); // Subí a 4 segundos para que dé tiempo a leer el error
 
+                // Modal
                 const modalEl = document.getElementById('dynamicModal');
                 const modal = new bootstrap.Modal(modalEl);
                 document.querySelectorAll('.open-modal').forEach(btn => {
@@ -199,6 +220,7 @@
                     });
                 });
 
+                // Delete
                 document.querySelectorAll('.js-delete-btn').forEach(btn => {
                     btn.addEventListener('click', function () {
                         Swal.fire({
@@ -207,7 +229,6 @@
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonColor: '#d33', 
-                            cancelButtonColor: '#3085d6',
                             confirmButtonText: 'Sí, eliminar',
                             cancelButtonText: 'Cancelar'
                         }).then((r) => {
@@ -230,4 +251,4 @@
             }
         </script>
     </main>
-</x-app-layout> 
+</x-app-layout>

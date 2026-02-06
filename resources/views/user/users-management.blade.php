@@ -1,35 +1,32 @@
 <x-app-layout>
+    {{-- 1. ESTILOS ADAPTADOS --}}
     <style>
-        /* 1. ESTILOS DE ALERTAS (Originales) */
-        .alert-success {
-            background-color: #e4f4db !important;
-            color: #708736 !important;
-            border-color: #e4f4db !important;
-            font-weight: 400 !important;
-            font-size: 14px !important;
-        }
-        .alert-success .btn-close {
-            filter: none !important; 
-            opacity: 0.5;
-            color: #708736;
-        }
-        .alert-success .btn-close:hover {
-            opacity: 1;
-        }
-        .alert-danger {
-            background-color: #fde1e1 !important; 
-            color: #cf304a !important; 
-            border-color: #fde1e1 !important; 
-            font-weight: 400 !important; 
-            font-size: 14px !important; 
-        }
+        /* ALERTAS */
+        .alert-success { background-color: #e4f4db !important; color: #708736 !important; border-color: #e4f4db !important; font-size: 14px !important; }
+        .alert-success .btn-close { filter: none !important; opacity: 0.5; color: #708736; }
+        .alert-success .btn-close:hover { opacity: 1; }
+        .alert-danger { background-color: #fde1e1 !important; color: #cf304a !important; border-color: #fde1e1 !important; font-size: 14px !important; }
         .alert-danger .btn-close { filter: none !important; opacity: 0.5; color: #cf304a; }
 
-        /* 2. ESTILOS DEL BUSCADOR (Formato Parroquias) */
+        /* BUSCADOR Y FILTROS */
         .input-group-text { border-color: #dee2e6; }
         .form-control:focus, .form-select:focus { border-color: #5ea6f7; box-shadow: 0 0 0 0.2rem rgba(94, 166, 247, 0.25); }
-        /* Esta clase controla el tamaño compacto */
         .compact-filter { width: auto; min-width: 140px; max-width: 250px; } 
+
+        /* ESTILOS DE TABLA (Formato Asignaciones) */
+        .table thead th {
+            font-size: 14px !important;    
+            text-transform: uppercase;    
+            letter-spacing: 0.05rem;      
+            font-weight: 700 !important;  
+            padding-top: 15px !important; 
+            padding-bottom: 15px !important; 
+        }
+        .btn-action { margin-right: 4px; }
+
+        /* BADGES DE ESTADO USUARIO */
+        .badge-activo { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-inactivo { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
@@ -37,6 +34,7 @@
 
         <div class="container py-4">
             
+            {{-- 2. ENCABEZADO --}}
             <div class="mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <h3 class="font-weight-bolder mb-0" style="color: #1c2a48;">Administración de Usuarios</h3>
@@ -44,9 +42,10 @@
                         Total: {{ $users->total() }}
                     </span>
                 </div>
-                <p class="mb-0 text-secondary text-sm">Aquí puedes gestionar los reportes de usuarios.</p>
+                <p class="mb-0 text-secondary text-sm">Aquí puedes gestionar los reportes y permisos de usuarios.</p>
             </div>
 
+            {{-- 3. ALERTAS --}}
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show alert-temporal mb-3" role="alert">
                     <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
@@ -64,10 +63,9 @@
             <form action="{{ route('users.generateReports') }}" method="POST" id="reportForm">
                 @csrf
 
-                {{-- AQUÍ ESTÁ EL CAMBIO: FORMATO FLEX DE PARROQUIAS --}}
+                {{-- 4. BOTONES DE REPORTE Y BUSCADOR COMPACTO --}}
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
                     
-                    {{-- Lado Izquierdo: Botón Reporte (Igual que antes pero con w-100 responsive) --}}
                     <div class="dropdown w-100 w-md-auto">
                         <button class="btn text-white dropdown-toggle mb-0 px-4 w-100 w-md-auto" 
                                 style="background-color: #5ea6f7; border-radius: 6px; font-weight: 600;" 
@@ -80,7 +78,6 @@
                         </ul>
                     </div>
 
-                    {{-- Lado Derecho: Buscador Compacto (Formato Parroquias) --}}
                     <div class="d-flex gap-2 w-100 w-md-auto justify-content-end">
                         <div class="input-group input-group-sm bg-white border rounded overflow-hidden compact-filter">
                             <span class="input-group-text bg-white border-0 pe-1 text-secondary"><i class="fas fa-search"></i></span>
@@ -91,22 +88,22 @@
                     </div>
                 </div>
 
+                {{-- 5. TABLA ESTILO ASIGNACIONES --}}
                 <div class="card shadow-sm border">
-                    <div class="card-body p-3">
+                    <div class="card-body p-0"> {{-- Cambiado a p-0 para que la tabla toque los bordes --}}
                         <div class="table-responsive">
-                            <table class="table table-hover table-bordered align-middle text-center mb-0">
-                                <thead class="table-dark">
+                            <table class="table table-hover align-middle text-center mb-0">
+                                <thead class="bg-dark text-white">
                                     <tr>
-                                        <th style="width: 50px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;"></th>
-                                        <th style="width: 50px;">#</th>
-                                        <th>Código</th>
-                                        <th>Nombre</th>
-                                        <th>Email</th>
-                                        <th>Teléfono</th>
-                                        <th>Ubicación</th>
-                                        <th>Roles</th>
-                                        <th>Estado</th>
-                                        <th style="width:120px;">Acciones</th>
+                                        <th class="opacity-10" style="width: 50px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="cursor: pointer;"></th>
+                                        <th class="opacity-10">#</th>
+                                        <th class="opacity-10">Código</th>
+                                        <th class="opacity-10 text-start ps-3">Nombre</th>
+                                        <th class="opacity-10">Email</th>
+                                        <th class="opacity-10">Ubicación</th>
+                                        <th class="opacity-10">Rol</th>
+                                        <th class="opacity-10">Estado</th>
+                                        <th class="opacity-10" style="width:120px;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -114,51 +111,59 @@
                                         <tr>
                                             <td><input type="checkbox" name="users[]" value="{{ $user->id }}" style="cursor: pointer;"></td>
                                             
-                                            <td class="fw-bold text-secondary">
+                                            <td class="text-sm fw-bold text-secondary">
                                                 {{ $users->firstItem() + $loop->index }}
                                             </td>
 
-                                            <td class="fw-bold">{{ $user->codigo_usuario }}</td>
-                                            <td class="text-start ps-3">{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
-                                            <td>{{ $user->phone ?? 'N/A' }}</td>
-                                            <td>{{ $user->location ?? 'N/A' }}</td>
+                                            <td class="fw-bold text-dark">{{ $user->codigo_usuario }}</td>
+                                            
+                                            <td class="text-start ps-3">
+                                                <div class="d-flex flex-column">
+                                                    <span class="text-sm font-weight-bold">{{ $user->name }}</span>
+                                                    <span class="text-xs text-secondary">{{ $user->phone ?? 'Sin teléfono' }}</span>
+                                                </div>
+                                            </td>
+                                            
+                                            <td class="text-sm">{{ $user->email }}</td>
+                                            
+                                            <td class="text-sm">{{ $user->location ?? 'N/A' }}</td>
 
                                             <td>
-                                                <span class="badge border" style="background-color: #e9ecef; color: #343a40; font-size: 0.85rem; font-weight: 600;">
-                                                    {{ $user->getRoleNames()->first() }}
+                                                <span class="badge border" style="background-color: #f8f9fa; color: #343a40; font-size: 0.75rem; font-weight: 700;">
+                                                    {{ $user->getRoleNames()->first() ?? 'Sin Rol' }}
                                                 </span>
                                             </td>
 
                                             <td>
                                                 @if($user->status)
-                                                    <span class="badge" style="background-color: #19cf2bff; color: white; font-size: 0.85rem;">Activo</span>
+                                                    <span class="badge badge-activo">Activo</span>
                                                 @else
-                                                    <span class="badge" style="background-color: #ef1b30ff; color: white; font-size: 0.85rem;">Inactivo</span>
+                                                    <span class="badge badge-inactivo">Inactivo</span>
                                                 @endif
                                             </td>
                                             
                                             <td>
-                                                {{-- BOTÓN EDITAR (Tu código original) --}}
-                                                <button type="button" class="btn btn-sm btn-warning mb-0" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#editUserModal"
-                                                        data-id="{{ $user->id }}"
-                                                        title="Editar">
-                                                    <i class="fa-solid fa-pen-to-square" style="font-size: 0.7rem;"></i>
-                                                </button>
+                                                <div class="d-flex justify-content-center">
+                                                    <button type="button" class="btn btn-sm btn-warning mb-0 btn-action" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editUserModal"
+                                                            data-id="{{ $user->id }}"
+                                                            title="Editar Usuario">
+                                                        <i class="fa-solid fa-pen-to-square" style="font-size: 0.7rem;"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="10" class="text-center py-4 text-muted">No se encontraron usuarios.</td></tr>
+                                        <tr><td colspan="9" class="text-center py-4 text-muted">No se encontraron usuarios.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                         
                         @if(method_exists($users, 'links'))
-                            <div class="mt-3 d-flex justify-content-end">
-                                {{ $users->links() }}
+                            <div class="mt-3 px-3 d-flex justify-content-end">
+                                {{ $users->appends(request()->query())->links() }}
                             </div>
                         @endif
                     </div>
@@ -166,11 +171,10 @@
             </form>
         </div>
 
-        {{-- MODAL VACÍO (Tu código original) --}}
+        {{-- MODAL DINÁMICO --}}
         <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div class="modal-content" id="modal-content-wrapper">
-                    {{-- Aquí se cargará la vista externa --}}
                     <div class="modal-body text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Cargando...</span>
@@ -185,7 +189,7 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 
-                // 1. Ocultar alertas
+                // 1. Ocultar alertas automáticas
                 setTimeout(function () {
                     document.querySelectorAll('.alert-temporal').forEach(alert => {
                         alert.style.transition = "opacity 0.5s";
@@ -194,7 +198,7 @@
                     });
                 }, 3000);
 
-                // 2. Buscador
+                // 2. Buscador (Enter para filtrar)
                 const searchInput = document.getElementById('searchInput');
                 if(searchInput){
                     searchInput.addEventListener('keypress', function (e) {
@@ -206,18 +210,15 @@
                     });
                 }
 
-                // 3. Lógica del Modal (AJAX / FETCH)
+                // 3. Lógica del Modal FETCH
                 var editUserModal = document.getElementById('editUserModal');
-                
                 editUserModal.addEventListener('show.bs.modal', function (event) {
                     var button = event.relatedTarget;
                     var userId = button.getAttribute('data-id');
                     var modalContent = document.getElementById('modal-content-wrapper');
 
-                    // URL: Ajusta '/users/' si tu ruta prefix es diferente
                     var url = "/user/" + userId + "/edit"; 
 
-                    // Mostrar cargando mientras llega la respuesta
                     modalContent.innerHTML = `
                         <div class="modal-body text-center py-5">
                             <div class="spinner-border text-primary" role="status"></div>
@@ -225,24 +226,21 @@
                         </div>
                     `;
 
-                    // Petición al servidor
                     fetch(url)
                         .then(response => {
                             if (!response.ok) throw new Error('Error al cargar');
                             return response.text();
                         })
                         .then(html => {
-                            // Pegar el HTML que devuelve el controlador
                             modalContent.innerHTML = html;
                         })
                         .catch(error => {
-                            console.error(error);
                             modalContent.innerHTML = `
                                 <div class="modal-header bg-danger text-white">
                                     <h5 class="modal-title">Error</h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body text-center">No se pudo cargar la información.</div>
+                                <div class="modal-body text-center">No se pudo cargar la información del usuario.</div>
                             `;
                         });
                 });
