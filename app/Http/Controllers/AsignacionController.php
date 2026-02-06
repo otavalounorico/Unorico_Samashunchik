@@ -186,11 +186,11 @@ class AsignacionController extends Controller
                     'observacion' => 'Ingreso registrado'
                 ]);
 
-                // 5. Actualizar Estado del Nicho
+                // 5. Actualizar Ocupación del Nicho
                 $totalAhora = $ocupantesActivos + 1;
                 $nicho->update([
-                    'estado' => ($totalAhora >= 3 ? 'LLENO' : 'OCUPADO'),
-                    'disponible' => ($totalAhora < 3)
+                    'ocupacion' => $totalAhora,
+                    'disponible' => ($totalAhora < $nicho->capacidad)
                 ]);
             });
 
@@ -234,10 +234,13 @@ class AsignacionController extends Controller
                 'observacion' => $request->observacion ?? 'Exhumado / Restos retirados'
             ]);
 
-            // Liberar espacio
+            // Liberar espacio (decrementamos ocupación)
+            $ocupantesActivos = $nicho->fallecidos()
+                ->wherePivot('fecha_exhumacion', null)
+                ->count();
             $nicho->update([
-                'estado' => 'OCUPADO',
-                'disponible' => true
+                'ocupacion' => $ocupantesActivos,
+                'disponible' => ($ocupantesActivos < $nicho->capacidad)
             ]);
         });
 
@@ -311,8 +314,8 @@ class AsignacionController extends Controller
                     ->count();
 
                 $nicho->update([
-                    'estado' => ($ocupantesRestantes > 0) ? 'OCUPADO' : 'DISPONIBLE',
-                    'disponible' => true
+                    'ocupacion' => $ocupantesRestantes,
+                    'disponible' => ($ocupantesRestantes < $nicho->capacidad)
                 ]);
             });
 
